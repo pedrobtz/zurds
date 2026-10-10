@@ -1,0 +1,37 @@
+#!/bin/sh
+# The performance targets of design section 15, measured on files written
+# here (roadmap Stage 10). Each step runs in its own R process under
+# /usr/bin/time, for its elapsed time and peak resident memory. Record the
+# results in design.md section 15.
+#
+# Usage: tools/run-benchmarks [scale]   (1 = the targets' 2 GB file; less
+#        to try it on something smaller)
+set -eu
+SCALE="${1:-1}"
+dir=$(mktemp -d)
+trap 'rm -rf "$dir"' EXIT
+case "$(uname)" in Darwin) TIME="/usr/bin/time -l";; *) TIME="/usr/bin/time -v";; esac
+
+Rscript -e '
+  scale <- as.numeric(commandArgs(TRUE)[1]); dir <- commandArgs(TRUE)[2]
+  set.seed(1)
+  # Ten data frames of 25 million doubles (200 MB) each: a 2 GB .rda.
+  n <- round(5e6 * scale)
+  e <- new.env()
+  for (i in 1:10) assign(sprintf("df%02d", i),
+    data.frame(a = rnorm(n), b = runif(n), c = seq_len(n) + 0.5,
+               d = rnorm(n), e = rep(c(1.5, 2.5), length.out = n)), envir = e)
+  save(list = ls(e), envir = e, file = file.path(dir, "big.rda"))
+  # One data frame of 1 million rows, for reading data.
+  saveRDS(e$df01[seq_len(min(n, 1e6)), ], file.path(dir, "df.rds"))
+' "$SCALE" "$dir"
+ls -l "$dir"
+
+run() { # step file
+  out=$($TIME Rscript tools/benchmarks.R "$1" "$2" 2>"$dir/time.txt")
+  rss=$(awk '/maximum resident set size/ {print $1} /Maximum resident set size/ {print $NF * 1024}' "$dir/time.txt")
+  echo "$out peak_rss_mb=$(( rss / 1024 / 1024 ))"
+}
+echo "R $(Rscript -e 'cat(format(getRversion()))'), $(uname -sm), scale $SCALE"
+for s in idle decompress toc load extract; do run "$s" "$dir/big.rda"; done
+for s in readrds read_data; do run "$s" "$dir/df.rds"; done
