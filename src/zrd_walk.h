@@ -104,6 +104,10 @@ typedef enum {
 
 typedef enum { ZRD_EVENT_BEGIN = 1, ZRD_EVENT_END = 2 } zrd_event_kind;
 
+/* The longest integer vector whose values an END event carries: enough
+ * for dim and compact row names. */
+#define ZRD_INT_CAP 8
+
 typedef struct zrd_event {
     zrd_event_kind kind;
     int type;             /* ZRD_TYPE(flags) */
@@ -117,6 +121,11 @@ typedef struct zrd_event {
     size_t name_len;
     int64_t ref;          /* REFSXP: the 1-based index it refers to */
     int ref_type;         /* REFSXP: what that entry is (SYMSXP, ENVSXP, ...) */
+    const int32_t *ints;  /* INTSXP and LGLSXP END, when ints are captured */
+    int nints;            /* and the vector has at most ZRD_INT_CAP: its
+                             values; NA_integer_ as INT32_MIN */
+    const double *reals;  /* REALSXP END, likewise: an ALTREP compact */
+    int nreals;           /* sequence's state, for its length */
     const char *data;     /* CHARSXP END, when strings are captured: the */
     size_t data_len;      /* string's first bytes, not 0-terminated, and */
     int data_complete;    /* whether that is all of it. REFSXP END to a
@@ -155,6 +164,7 @@ typedef struct zrd_walk {
     size_t arena_len, arena_cap;
 
     int big_endian;       /* the binary format: the writer's byte order */
+    int capture_ints;     /* deliver short integer and double vectors' values */
 
     /* Strings delivered with CHARSXP END events, when string_cap > 0: the
      * first string_cap bytes of each, decoded. */
