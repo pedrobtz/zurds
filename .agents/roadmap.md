@@ -332,6 +332,11 @@ from knitr or targets caches, without forcing the promises
 - `.rdb` entries: zlib (`compressed = 1`) and the four-byte length plus
   type byte (`'0'`, `'1'`, `'2'`, `'Z'`), decompressed through R's own
   codecs (§3).
+  *Deviation 2026-10-10, approved by the maintainer:* zlib entries go
+  through zurds' own bounded decoder (`src/zrd_inflate.c`), since
+  `memDecompress()` grows without bound on truncated zlib on R 4.6 and
+  earlier without libdeflate; xz entries, raw LZMA2, are wrapped in an
+  `.xz` container for `memDecompress()`. Design §7.
 - `rds_lazyload_toc(path)` and `rds_lazyload_extract(path, name)`
   through the data builder; top-level promises reported, never forced
   (D5).

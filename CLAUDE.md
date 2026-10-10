@@ -106,6 +106,9 @@ R objects are made from stream content. R-side conditions are built in
   output, and turns codec warnings into `zurds_decompression_error`. Read
   source bytes only through `zrd_source_call()`, or a codec warning
   escapes as a plain warning.
+- Lazy-load zlib entries go through `src/zrd_inflate.c`, never
+  `memDecompress()`; xz entries are raw LZMA2 and must be wrapped by
+  `zrd_xz_wrap` first (design section 7).
 - Never decompress input with `memDecompress()`: with zlib (Linux R
   without libdeflate) it doubles its buffer forever on truncated gzip, and
   the process is killed. Compressed raw vectors go through a temporary file

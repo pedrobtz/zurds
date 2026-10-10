@@ -290,12 +290,23 @@ walker, lists the variables, and extracts one through the data builder.
 It does not evaluate the promise that `lazyLoadDBfetch()` would evaluate:
 a top-level promise in an `.rdb` entry is reported, not forced.
 
-**Stage 9.** An entry's declared length is checked against the building
-limit before `memDecompress()` runs, and the result must have that length
-(a truncated xz entry decompresses to a prefix without an error). On R
-releases before the fix in `connections.c` (present at a97c000), zlib's
-`memDecompress()` path could grow its buffer without bound on a truncated
-entry; a lazy-load database is read as trusted as the R that wrote it.
+**Changed in Stage 9 (2026-10-10, approved by the maintainer).** D3 holds
+for files and for bzip2 entries, but not for the other two codecs:
+
+- zlib (`compressed = TRUE` or type `'1'`, the default): on R 4.6 and
+  earlier built without libdeflate, `memDecompress()` doubles its buffer
+  without bound on a truncated zlib stream (fixed in R-devel by a97c000),
+  so a corrupt `.rdb` could exhaust memory. zurds decodes zlib entries
+  with its own bounded decoder, `src/zrd_inflate.c` (RFC 1950 and 1951,
+  R-free, fuzzed), into exactly the length the entry declares, checking
+  the Adler-32.
+- xz (type `'Z'`): R writes raw LZMA2 (`R_compress3()`,
+  `lzma_raw_encoder`, preset 6), which `memDecompress(type = "xz")` cannot
+  read. zurds wraps it in a minimal `.xz` container whose index gives the
+  declared sizes, and decodes that with `memDecompress()`.
+
+Every entry's declared length is checked against the building limit before
+it is decompressed, and the result must have that length.
 
 ## 8. Safety model
 
