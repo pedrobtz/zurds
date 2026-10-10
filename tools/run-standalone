@@ -33,9 +33,9 @@ for f in "$DIR"/*-xdr-*-none.rds "$DIR"/*-xdr-*-none.rda; do
   "$out/walk" --prefixes "$f"
   rc=$?
   set -e
+  # Every item kind is walked since Stage 3: anything but 0 fails.
   case $rc in
     0) walked=$((walked + 1)) ;;
-    2) ;;
     *) fail=1 ;;
   esac
 done

@@ -28,6 +28,7 @@ static void tick(void *ctx)
 typedef struct {
     double begun, ended;
     int max_depth;
+    double types[256];   /* items begun, by type */
 } walk_stats;
 
 static int count_event(void *ctx, const zrd_event *ev)
@@ -35,6 +36,7 @@ static int count_event(void *ctx, const zrd_event *ev)
     walk_stats *st = ctx;
     if (ev->kind == ZRD_EVENT_BEGIN) {
         st->begun += 1;
+        st->types[ev->type & 255] += 1;
         if (ev->depth > st->max_depth) st->max_depth = ev->depth;
     } else {
         st->ended += 1;
@@ -72,7 +74,8 @@ SEXP zrd_walk_stats(SEXP src, SEXP skip, SEXP limits)
     SEXP ptr = PROTECT(R_MakeExternalPtr(w, R_NilValue, src));
     R_RegisterCFinalizerEx(ptr, walk_finalizer, TRUE);
 
-    walk_stats stats = {0, 0, 0};
+    walk_stats stats;
+    memset(&stats, 0, sizeof stats);
     zrd_status st = zrd_walk_init(w, &s->reader, &lim, count_event, &stats, tick, NULL);
     if (st == ZRD_OK) st = zrd_walk_header(w);
     if (st == ZRD_OK) st = zrd_walk_item(w);
@@ -83,7 +86,7 @@ SEXP zrd_walk_stats(SEXP src, SEXP skip, SEXP limits)
     const char *names[] = {"status", "format", "version", "writer_version",
                            "min_reader_version", "native_encoding", "items",
                            "items_ended", "bytes", "max_depth", "offset",
-                           "path", "detail", ""};
+                           "path", "detail", "types", ""};
     SEXP out = PROTECT(Rf_mkNamed(VECSXP, names));
     char fmt[2] = {(char) w->header.format, '\0'};
     SET_VECTOR_ELT(out, 0, Rf_mkString(zrd_status_name(st)));
@@ -99,6 +102,9 @@ SEXP zrd_walk_stats(SEXP src, SEXP skip, SEXP limits)
     SET_VECTOR_ELT(out, 10, Rf_ScalarReal(st == ZRD_OK ? NA_REAL : (double) w->err_offset));
     SET_VECTOR_ELT(out, 11, Rf_mkString(path));
     SET_VECTOR_ELT(out, 12, Rf_mkString(st == ZRD_OK ? "" : w->err_detail));
+    SEXP types = Rf_allocVector(REALSXP, 256);
+    SET_VECTOR_ELT(out, 13, types);
+    memcpy(REAL(types), stats.types, sizeof stats.types);
 
     zrd_walk_free(w);
     UNPROTECT(2);

@@ -21,8 +21,21 @@ typedef enum {
     PH_TAG,        /* a cell's tag */
     PH_CAR,        /* a cell's value */
     PH_CDR,        /* a cell's rest: the next cell or the end */
-    PH_PRINTNAME   /* a symbol's CHARSXP */
+    PH_PRINTNAME,  /* a symbol's CHARSXP */
+    PH_SEQ,        /* the fixed children in `plan` */
+    PH_BC_BODY,    /* a BCODESXP item: its ReadBC1 body */
+    PH_BC_CODE,    /* ReadBC1: the code vector */
+    PH_BC_NCONSTS, /* ReadBC1: the number of constants */
+    PH_BC_CONSTS,  /* ReadBCConsts: the constants */
+    PH_BCL_ATTR,   /* ReadBCLang: attributes, */
+    PH_BCL_TAG,    /* tag, */
+    PH_BCL_CAR,    /* car */
+    PH_BCL_CDR     /* and cdr */
 } zrd_phase;
+
+/* What a frame is: an item, with flags and events, or one of bytecode's
+ * structures, which have neither (serialize.c, ReadBC1, ReadBCLang). */
+typedef enum { FK_ITEM = 0, FK_BC1, FK_BCLANG } zrd_frame_kind;
 
 struct zrd_frame {
     int type;
@@ -35,6 +48,14 @@ struct zrd_frame {
     int64_t index;
     int has_name;          /* a cell whose tag is a symbol, or a symbol */
     size_t name_off, name_len;
+    zrd_frame_kind kind;
+    zrd_role plan[3];      /* PH_SEQ: fixed children, in order */
+    int nplan, iplan;
+    int tail_attr;         /* PH_SEQ: then attributes, if flagged */
+    int64_t reps;          /* BCODESXP: ReadBC's reps vector length */
+    int bcl_attr;          /* FK_BCLANG: an ATTRLANGSXP or ATTRLISTSXP */
+    const char *lead;      /* a continued pairlist: "@body" after a
+                              closure's cell, "@code" after a promise's */
 };
 
 #define TICK_EVERY 65536
@@ -227,9 +248,26 @@ static zrd_status emit(zrd_walk *w, zrd_event_kind kind, const zrd_frame *f,
 
 static zrd_phase after_attr(const zrd_frame *f)
 {
-    if (f->type == ZRD_LISTSXP)
+    if (ZRD_IS_PAIRLIST(f->type))
         return ZRD_HAS_TAG(f->flags) ? PH_TAG : PH_CAR;
     return PH_DONE;
+}
+
+static zrd_phase attr_or_done(const zrd_frame *f)
+{
+    return ZRD_HAS_ATTR(f->flags) ? PH_ATTR : PH_DONE;
+}
+
+/* Sets up PH_SEQ over up to three fixed children. */
+static void plan(zrd_frame *f, int tail_attr, int n, zrd_role a, zrd_role b, zrd_role c)
+{
+    f->plan[0] = a;
+    f->plan[1] = b;
+    f->plan[2] = c;
+    f->nplan = n;
+    f->iplan = 0;
+    f->tail_attr = tail_attr;
+    f->phase = PH_SEQ;
 }
 
 static zrd_phase first_cell_phase(const zrd_frame *f)
@@ -356,20 +394,86 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
     }
 
     /* serialize.c, ReadItem_Iterative: attributes, tag, car, then the
-     * cdr as the next item. */
-    case ZRD_LISTSXP:
+     * cdr as the next item. A closure's tag is its environment, its car
+     * its formals and its cdr its body; a promise's are its environment,
+     * value and code. */
+    case ZRD_LISTSXP: case ZRD_LANGSXP: case ZRD_CLOSXP: case ZRD_PROMSXP:
+    case ZRD_DOTSXP:
         f->phase = first_cell_phase(f);
         break;
 
-    /* Walked from Stage 3 on. */
-    case ZRD_CLOSXP: case ZRD_ENVSXP: case ZRD_PROMSXP: case ZRD_LANGSXP:
-    case ZRD_SPECIALSXP: case ZRD_BUILTINSXP: case ZRD_DOTSXP:
-    case ZRD_BCODESXP: case ZRD_EXTPTRSXP: case ZRD_WEAKREFSXP:
-    case ZRD_OBJSXP: case ZRD_NAMESPACESXP: case ZRD_PACKAGESXP:
-    case ZRD_PERSISTSXP: case ZRD_ALTREP_SXP: {
-        char msg[96];
-        snprintf(msg, sizeof msg, "item type %d is not walked yet", f->type);
-        return fail(w, ZRD_ERR_UNSUPPORTED, msg);
+    /* serialize.c, the ENVSXP case: registered before its contents, so a
+     * cycle refers back to it; the attributes are always written. */
+    case ZRD_ENVSXP: {
+        int32_t locked;
+        if ((st = in_int(w, &locked))) return st;
+        if ((st = add_ref(w, ZRD_ENVSXP, 0, 0))) return st;
+        plan(f, 0, 3, ZRD_ROLE_ENCLOS, ZRD_ROLE_FRAME, ZRD_ROLE_HASHTAB);
+        f->tail_attr = 2; /* always */
+        break;
+    }
+
+    /* serialize.c, InStringVec: a zero, a length, then that many items;
+     * registered once read. */
+    case ZRD_NAMESPACESXP: case ZRD_PACKAGESXP: case ZRD_PERSISTSXP: {
+        int32_t zero, len;
+        if ((st = in_int(w, &zero))) return st;
+        if (zero != 0)
+            return fail(w, ZRD_ERR_PARSE, "names in persistent strings are not supported");
+        if ((st = in_int(w, &len))) return st;
+        if (len < 0) return fail(w, ZRD_ERR_PARSE, "negative string vector length");
+        if ((double) len > w->limits.max_items - w->items)
+            return fail(w, ZRD_ERR_ITEM_LIMIT, "the item claims more items than max_items allows");
+        f->length = len;
+        f->phase = len > 0 ? PH_ELEMS : PH_DONE;
+        break;
+    }
+
+    /* serialize.c, the EXTPTRSXP and WEAKREFSXP cases: registered first. */
+    case ZRD_EXTPTRSXP:
+        if ((st = add_ref(w, ZRD_EXTPTRSXP, 0, 0))) return st;
+        plan(f, 1, 2, ZRD_ROLE_PROT, ZRD_ROLE_EXTTAG, ZRD_ROLE_ROOT);
+        break;
+    case ZRD_WEAKREFSXP:
+        if ((st = add_ref(w, ZRD_WEAKREFSXP, 0, 0))) return st;
+        f->phase = attr_or_done(f);
+        break;
+
+    /* serialize.c, the SPECIALSXP and BUILTINSXP cases: a length and the
+     * primitive's name. */
+    case ZRD_SPECIALSXP: case ZRD_BUILTINSXP: {
+        int32_t len;
+        if ((st = in_int(w, &len))) return st;
+        if (len < 0) return fail(w, ZRD_ERR_PARSE, "invalid length");
+        if ((st = check_size(w, (double) len))) return st;
+        f->length = len;
+        if ((st = emit(w, ZRD_EVENT_BEGIN, f, w->depth - 1, parent, 0, 0))) return st;
+        if ((st = skip(w, (uint64_t) len, "a primitive's name"))) return st;
+        f->phase = attr_or_done(f);
+        return ZRD_OK;
+    }
+
+    /* serialize.c, the OBJSXP case: nothing but attributes. */
+    case ZRD_OBJSXP:
+        f->phase = attr_or_done(f);
+        break;
+
+    /* serialize.c, the ALTREP_SXP case: class information, state and
+     * attributes, each an item; no attributes after them. */
+    case ZRD_ALTREP_SXP:
+        plan(f, 0, 3, ZRD_ROLE_ALTREP_INFO, ZRD_ROLE_ALTREP_STATE, ZRD_ROLE_ALTREP_ATTR);
+        break;
+
+    /* serialize.c, ReadBC: the length of the reps vector, then ReadBC1. */
+    case ZRD_BCODESXP: {
+        int32_t reps;
+        if ((st = in_int(w, &reps))) return st;
+        if (reps < 0) return fail(w, ZRD_ERR_PARSE, "negative bytecode reps length");
+        if ((double) reps > w->limits.max_items - w->items)
+            return fail(w, ZRD_ERR_ITEM_LIMIT, "the bytecode claims more items than max_items allows");
+        f->reps = reps;
+        f->phase = PH_BC_BODY;
+        break;
     }
 
     case ZRD_CLASSREFSXP:
@@ -404,6 +508,14 @@ static zrd_status end(zrd_walk *w, uint64_t end_offset)
     zrd_frame *f = &w->stack[w->depth - 1];
     zrd_frame *parent = w->depth > 1 ? &w->stack[w->depth - 2] : NULL;
     zrd_status st;
+    if (f->kind != FK_ITEM) {
+        w->depth--;
+        return ZRD_OK;
+    }
+    if (f->type == ZRD_NAMESPACESXP || f->type == ZRD_PACKAGESXP ||
+        f->type == ZRD_PERSISTSXP) {
+        if ((st = add_ref(w, f->type, 0, 0))) return st;
+    }
     if (f->type == ZRD_SYMSXP) {
         if ((st = add_ref(w, ZRD_SYMSXP, f->name_off, f->has_name ? f->name_len : 0)))
             return st;
@@ -418,6 +530,89 @@ static zrd_status end(zrd_walk *w, uint64_t end_offset)
     return st;
 }
 
+/* ---- bytecode ------------------------------------------------------ */
+
+/* Pushes one of bytecode's structures, which has no flags and emits no
+ * events, but counts against max_items and max_depth like an item. */
+static zrd_status push_pseudo(zrd_walk *w, zrd_frame_kind kind, zrd_role role,
+                              int64_t index, zrd_frame **out)
+{
+    zrd_status st;
+    w->item_offset = here(w);
+    if ((st = count_item(w))) return st;
+    if (w->depth > w->limits.max_depth)
+        return fail(w, ZRD_ERR_DEPTH_LIMIT, "the items nest deeper than max_depth allows");
+    zrd_frame *f = &w->stack[w->depth++];
+    memset(f, 0, sizeof *f);
+    f->kind = kind;
+    f->type = -1;
+    f->role = role;
+    f->index = index;
+    f->offset = w->item_offset;
+    f->length = -1;
+    *out = f;
+    return ZRD_OK;
+}
+
+/* The length of the reps vector of the innermost ReadBC. */
+static int64_t bc_reps(const zrd_walk *w)
+{
+    for (int i = w->depth - 1; i >= 0; i--)
+        if (w->stack[i].kind == FK_ITEM && w->stack[i].type == ZRD_BCODESXP)
+            return w->stack[i].reps;
+    return 0;
+}
+
+static int is_bc_lang(int32_t type)
+{
+    return type == ZRD_BCREPDEF || type == ZRD_BCREPREF || type == ZRD_LANGSXP ||
+           type == ZRD_LISTSXP || type == ZRD_ATTRLANGSXP || type == ZRD_ATTRLISTSXP;
+}
+
+/* serialize.c, ReadBCLang, for a `type` just read. A language cell gets a
+ * frame; `reuse`, when given, is the cell whose cdr this is, and its frame
+ * is reused so a long call does not deepen the stack. */
+static zrd_status bc_lang(zrd_walk *w, int32_t type, zrd_role role, int64_t index,
+                          zrd_frame *reuse)
+{
+    zrd_status st;
+    int64_t reps = bc_reps(w);
+    if (type == ZRD_BCREPREF) {
+        int32_t i;
+        if ((st = in_int(w, &i))) return st;
+        if (i < 0 || i >= reps)
+            return fail(w, ZRD_ERR_BAD_REF, "bytecode reference out of range");
+        if (reuse) reuse->phase = PH_DONE;
+        return ZRD_OK;
+    }
+    if (type == ZRD_BCREPDEF) {
+        int32_t pos;
+        if ((st = in_int(w, &pos)) || (st = in_int(w, &type))) return st;
+        if (pos < 0 || pos >= reps)
+            return fail(w, ZRD_ERR_BAD_REF, "bytecode definition out of range");
+    }
+    switch (type) {
+    case ZRD_LANGSXP: case ZRD_LISTSXP: case ZRD_ATTRLANGSXP: case ZRD_ATTRLISTSXP: {
+        zrd_frame *f = reuse;
+        if (f) {
+            w->item_offset = here(w);
+            if ((st = count_item(w))) return st;
+        } else if ((st = push_pseudo(w, FK_BCLANG, role, index, &f))) {
+            return st;
+        }
+        f->bcl_attr = type == ZRD_ATTRLANGSXP || type == ZRD_ATTRLISTSXP;
+        f->phase = f->bcl_attr ? PH_BCL_ATTR : PH_BCL_TAG;
+        return ZRD_OK;
+    }
+    case ZRD_BCREPDEF: case ZRD_BCREPREF:
+        return fail(w, ZRD_ERR_PARSE, "malformed bytecode language object");
+    default:
+        /* A marker, then an ordinary item. */
+        if (reuse) reuse->phase = PH_DONE;
+        return begin_next(w, role, index);
+    }
+}
+
 /* Advances the top frame by one child, or ends it. */
 static zrd_status step(zrd_walk *w)
 {
@@ -426,8 +621,11 @@ static zrd_status step(zrd_walk *w)
     switch (f->phase) {
     case PH_ELEMS: {
         int64_t i = f->next++;
-        if (f->next >= f->length)
-            f->phase = ZRD_HAS_ATTR(f->flags) ? PH_ATTR : PH_DONE;
+        if (f->next >= f->length) {
+            int strings = f->type == ZRD_NAMESPACESXP || f->type == ZRD_PACKAGESXP ||
+                          f->type == ZRD_PERSISTSXP;
+            f->phase = strings ? PH_DONE : attr_or_done(f);
+        }
         return begin_next(w, ZRD_ROLE_ELEMENT, i);
     }
     case PH_ATTR:
@@ -446,17 +644,84 @@ static zrd_status step(zrd_walk *w)
         uint64_t offset = here(w);
         int32_t flags;
         if ((st = in_int(w, &flags))) return st;
-        if (ZRD_TYPE(flags) == ZRD_LISTSXP) {
+        if (ZRD_IS_PAIRLIST(ZRD_TYPE(flags))) {
             /* The next cell: end this one and reuse the frame. */
             int64_t cell = f->next + 1;
+            const char *lead = f->type == ZRD_CLOSXP ? "@body"
+                             : f->type == ZRD_PROMSXP ? "@code" : f->lead;
             if ((st = end(w, offset))) return st;
             if ((st = begin(w, flags, offset, ZRD_ROLE_CELL, cell))) return st;
             w->stack[w->depth - 1].next = cell;
+            w->stack[w->depth - 1].lead = lead;
             return ZRD_OK;
         }
         f->phase = PH_DONE;
         return begin(w, flags, offset, ZRD_ROLE_CDR, f->next);
     }
+    case PH_SEQ:
+        if (f->iplan < f->nplan) {
+            zrd_role role = f->plan[f->iplan++];
+            return begin_next(w, role, 0);
+        }
+        f->phase = f->tail_attr == 2 ? PH_ATTR : f->tail_attr == 1 ? attr_or_done(f) : PH_DONE;
+        return ZRD_OK;
+
+    /* serialize.c, ReadBC and ReadBC1. */
+    case PH_BC_BODY: {
+        zrd_frame *bc;
+        f->phase = attr_or_done(f);
+        if ((st = push_pseudo(w, FK_BC1, ZRD_ROLE_ROOT, 0, &bc))) return st;
+        bc->phase = PH_BC_CODE;
+        return ZRD_OK;
+    }
+    case PH_BC_CODE:
+        f->phase = PH_BC_NCONSTS;
+        return begin_next(w, ZRD_ROLE_BC_CODE, 0);
+    case PH_BC_NCONSTS: {
+        int32_t n;
+        if ((st = in_int(w, &n))) return st;
+        if (n < 0) return fail(w, ZRD_ERR_PARSE, "negative bytecode constant count");
+        if ((double) n > w->limits.max_items - w->items)
+            return fail(w, ZRD_ERR_ITEM_LIMIT, "the bytecode claims more items than max_items allows");
+        f->length = n;
+        f->next = 0;
+        f->phase = n > 0 ? PH_BC_CONSTS : PH_DONE;
+        return ZRD_OK;
+    }
+    /* serialize.c, ReadBCConsts. */
+    case PH_BC_CONSTS: {
+        int64_t i = f->next++;
+        int32_t type;
+        if (f->next >= f->length) f->phase = PH_DONE;
+        if ((st = in_int(w, &type))) return st;
+        if (type == ZRD_BCODESXP) {
+            zrd_frame *bc;
+            if ((st = push_pseudo(w, FK_BC1, ZRD_ROLE_BC_CONST, i, &bc))) return st;
+            bc->phase = PH_BC_CODE;
+            return ZRD_OK;
+        }
+        if (is_bc_lang(type)) return bc_lang(w, type, ZRD_ROLE_BC_CONST, i, NULL);
+        return begin_next(w, ZRD_ROLE_BC_CONST, i);
+    }
+    /* serialize.c, ReadBCLang. */
+    case PH_BCL_ATTR:
+        f->phase = PH_BCL_TAG;
+        return begin_next(w, ZRD_ROLE_BC_LANG, 0);
+    case PH_BCL_TAG:
+        f->phase = PH_BCL_CAR;
+        return begin_next(w, ZRD_ROLE_BC_LANG, 0);
+    case PH_BCL_CAR: {
+        int32_t type;
+        f->phase = PH_BCL_CDR;
+        if ((st = in_int(w, &type))) return st;
+        return bc_lang(w, type, ZRD_ROLE_BC_LANG, 0, NULL);
+    }
+    case PH_BCL_CDR: {
+        int32_t type;
+        if ((st = in_int(w, &type))) return st;
+        return bc_lang(w, type, ZRD_ROLE_BC_LANG, 0, f);
+    }
+
     case PH_DONE:
         return end(w, here(w));
     }
@@ -553,16 +818,21 @@ void zrd_walk_path(const zrd_walk *w, char *buf, size_t cap)
     size_t len = 0;
     if (cap == 0) return;
     buf[0] = '\0';
+    if (w->depth > 0 && w->stack[0].lead)
+        append(buf, cap, &len, w->stack[0].lead, strlen(w->stack[0].lead));
     for (int i = 1; i < w->depth; i++) {
         const zrd_frame *f = &w->stack[i], *p = &w->stack[i - 1];
         char seg[48];
+        const char *fixed = NULL;
         switch (f->role) {
         case ZRD_ROLE_ELEMENT:
             snprintf(seg, sizeof seg, "[[%lld]]", (long long) f->index + 1);
             append(buf, cap, &len, seg, strlen(seg));
             break;
         case ZRD_ROLE_CAR:
-            if (p->has_name) {
+            if (p->type == ZRD_CLOSXP) fixed = "@formals";
+            else if (p->type == ZRD_PROMSXP) fixed = "@value";
+            else if (p->has_name) {
                 append(buf, cap, &len, "$", 1);
                 append(buf, cap, &len, w->arena + p->name_off, p->name_len);
             } else {
@@ -570,11 +840,30 @@ void zrd_walk_path(const zrd_walk *w, char *buf, size_t cap)
                 append(buf, cap, &len, seg, strlen(seg));
             }
             break;
-        case ZRD_ROLE_ATTR: append(buf, cap, &len, "@attr", 5); break;
-        case ZRD_ROLE_TAG: append(buf, cap, &len, "@tag", 4); break;
-        case ZRD_ROLE_CDR: append(buf, cap, &len, "@cdr", 4); break;
-        case ZRD_ROLE_PRINTNAME: append(buf, cap, &len, "@name", 5); break;
+        case ZRD_ROLE_TAG:
+            fixed = p->type == ZRD_CLOSXP || p->type == ZRD_PROMSXP ? "@env" : "@tag";
+            break;
+        case ZRD_ROLE_CDR:
+            fixed = p->type == ZRD_CLOSXP ? "@body" : p->type == ZRD_PROMSXP ? "@code" : "@cdr";
+            break;
+        case ZRD_ROLE_BC_CONST:
+            snprintf(seg, sizeof seg, "@consts[[%lld]]", (long long) f->index + 1);
+            append(buf, cap, &len, seg, strlen(seg));
+            break;
+        case ZRD_ROLE_ATTR: case ZRD_ROLE_ALTREP_ATTR: fixed = "@attr"; break;
+        case ZRD_ROLE_PRINTNAME: fixed = "@name"; break;
+        case ZRD_ROLE_ENCLOS: fixed = "@enclos"; break;
+        case ZRD_ROLE_FRAME: fixed = "@frame"; break;
+        case ZRD_ROLE_HASHTAB: fixed = "@hashtab"; break;
+        case ZRD_ROLE_PROT: fixed = "@prot"; break;
+        case ZRD_ROLE_EXTTAG: fixed = "@tag"; break;
+        case ZRD_ROLE_ALTREP_INFO: fixed = "@info"; break;
+        case ZRD_ROLE_ALTREP_STATE: fixed = "@state"; break;
+        case ZRD_ROLE_BC_CODE: fixed = "@code"; break;
+        case ZRD_ROLE_BC_LANG: fixed = "@lang"; break;
         default: break;
         }
+        if (fixed) append(buf, cap, &len, fixed, strlen(fixed));
+        if (f->lead) append(buf, cap, &len, f->lead, strlen(f->lead));
     }
 }

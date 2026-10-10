@@ -35,6 +35,11 @@ enum {
     ZRD_ATTRLISTSXP = 239, ZRD_ALTREP_SXP = 238
 };
 
+/* The pairlist family, read cell by cell (serialize.c,
+ * ReadItem_Iterative). */
+#define ZRD_IS_PAIRLIST(type) ((type) == ZRD_LISTSXP || (type) == ZRD_LANGSXP || \
+    (type) == ZRD_CLOSXP || (type) == ZRD_PROMSXP || (type) == ZRD_DOTSXP)
+
 /* Flag packing (serialize.c, PackFlags / UnpackFlags). */
 #define ZRD_TYPE(flags)     ((flags) & 255)
 #define ZRD_LEVELS(flags)   ((int) ((unsigned) (flags) >> 12))
@@ -83,7 +88,18 @@ typedef enum {
     ZRD_ROLE_CAR,         /* a pairlist cell's value; `name` is its tag */
     ZRD_ROLE_CDR,         /* the end of a pairlist: not itself a cell */
     ZRD_ROLE_CELL,        /* pairlist cell `index` after the first */
-    ZRD_ROLE_PRINTNAME    /* a symbol's name */
+    ZRD_ROLE_PRINTNAME,   /* a symbol's name */
+    ZRD_ROLE_ENCLOS,      /* an environment's enclosure, */
+    ZRD_ROLE_FRAME,       /* frame, */
+    ZRD_ROLE_HASHTAB,     /* and hash table */
+    ZRD_ROLE_PROT,        /* an external pointer's protected value */
+    ZRD_ROLE_EXTTAG,      /* and tag */
+    ZRD_ROLE_ALTREP_INFO, /* an ALTREP item's class information, */
+    ZRD_ROLE_ALTREP_STATE,/* state, */
+    ZRD_ROLE_ALTREP_ATTR, /* and attributes */
+    ZRD_ROLE_BC_CODE,     /* bytecode's code vector */
+    ZRD_ROLE_BC_CONST,    /* bytecode constant `index` */
+    ZRD_ROLE_BC_LANG      /* an item inside a bytecode language object */
 } zrd_role;
 
 typedef enum { ZRD_EVENT_BEGIN = 1, ZRD_EVENT_END = 2 } zrd_event_kind;
