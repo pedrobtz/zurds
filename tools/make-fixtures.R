@@ -149,7 +149,10 @@ local({
   chars <- function(s) c(int(262153, nchar(s)), charToRaw(s)) # ASCII CHARSXP
   call <- c(int(6, 1), chars("system"), int(2, 16, 1), chars("echo zurds"), int(254))
   promise <- c(int(5 + 1024, 253, 252), call)
-  header <- c(charToRaw("X\n"), int(3, 263681, 197888, 5), charToRaw("UTF-8"))
+  # Written by this R, as the manifest records; readable from R 3.5.0.
+  v <- unclass(getRversion())[[1]]
+  header <- c(charToRaw("X\n"), int(3, sum(v * c(65536, 256, 1)), 197888, 5),
+              charToRaw("UTF-8"))
   nested <- c(int(19, 2, 14, 1), writeBin(1, raw(), endian = "big"), promise)
   for (f in c("cve_top.rds", "cve_nested.rds")) {
     con <- gzfile(file.path(out, f), "wb")
