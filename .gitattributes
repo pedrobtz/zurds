@@ -1,0 +1,2 @@
+# Fixtures are bytes written by R: never convert their line endings.
+tests/testthat/fixtures/** binary

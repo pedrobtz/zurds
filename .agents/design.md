@@ -352,6 +352,18 @@ a raw vector.
   it, and keeps a raw-vector fallback (read with `readBin()` in R) if not.
 - Stage 0 measures nothing vendored; it settles the connection question
   and the prefix check.
+- **Settled 2026-10-10 (Stage 1, pull request #18):** `R_ext/Connections.h`
+  passes `R CMD check --as-cran` with no NOTE on every r-actions leg:
+  ubuntu release and oldrel-1, macOS, Windows, and the r-devel containers
+  `clang23`, `ubuntu-clang` and `ubuntu-gcc16` that stand in for CRAN's
+  `r-devel-linux-x86_64-debian-clang` and `-debian-gcc`; and under ASan,
+  UBSan, valgrind, rchk and LTO. The `readBin()` fallback is not needed.
+- R's codecs fail quietly on truncated input (Stage 1): through `gzfile()`,
+  gzip reads short, bzip2 and zstd read nothing, and xz warns; and
+  `memDecompress()` with zlib doubles its buffer without bound on
+  truncated gzip. zurds therefore never uses `memDecompress()` on input,
+  checks the gzip trailer and the xz footer itself, and treats empty
+  output and codec warnings as `zurds_decompression_error`.
 
 ## 14. Testing
 

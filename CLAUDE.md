@@ -21,9 +21,12 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stage 0 (package identity) only, 2026-10-10: `zurds_info()`, the condition
-classes, symbol hiding and its gate. No source, walk, scanner or builder
-yet. See the roadmap's stage table for what is done.
+Stages 0 and 1, 2026-10-10: `zurds_info()`, the condition classes, symbol
+hiding and its gate; the source (`R/source.R`, `src/zrd_source.c`,
+`src/zrd_reader.c`) that opens a path, raw vector or connection, detects
+the kind and compression and reads decompressed bytes in 64 KiB blocks; and
+the fixture generator. No walk, scanner or builder yet. See the roadmap's
+stage table for what is done.
 
 ## Stage tracking
 
@@ -53,11 +56,20 @@ Rscript -e 'devtools::check()'                   # R CMD check
 air format .                                     # format R sources
 tools/check-symbols <path/to/zurds.so>           # on an R CMD INSTALL build
 tools/check-symbols --canary                     # the gate must reject this
+Rscript tools/make-fixtures.R                    # rewrite tests/testthat/fixtures
+Rscript tools/make-fixtures.R --full DIR         # the full matrix, into DIR
+ZURDS_FIXTURES=DIR Rscript -e 'devtools::test()' # the suite against DIR
 ```
 
 ## Architecture
 
-See design §4. `src/init.c` registers `.Call` routines and is the only
+See design §4. Every user-facing function starts with `zrd_open()` in
+`R/source.R`: it detects compression from the file's magic bytes, opens
+the file with `gzfile()` (which decompresses everything R writes), wraps
+the connection or raw vector in a `zrd_source` external pointer, and
+detects the kind from the first decompressed bytes. `src/zrd_reader.c` is
+the R-free buffered reader the walk will consume; `src/zrd_source.c` is
+the R side that fills it with `R_ReadConnection()`. `src/init.c` registers `.Call` routines and is the only
 exported symbol. Internal C symbols use the `zrd_` / `ZRD_` prefix. The walk
 (`src/zrd_walk.c`, from Stage 2) is R-free and must compile with
 `-DZRD_STANDALONE`; the data builder (`src/zrd_build.c`) is the only place
@@ -74,6 +86,16 @@ R objects are made from stream content. R-side conditions are built in
   behind `#ifndef ZRD_STANDALONE`.
 - Limits are checked before a length from the file is trusted, never after.
 - An unknown pseudo-type is a parse error, never a skip.
+- R's codecs do not fail loudly on truncated input: through `gzfile()`,
+  gzip reads short, bzip2 and zstd read nothing, and xz warns.
+  `R/source.R` checks the gzip trailer's ISIZE, the xz footer and empty
+  output, and turns codec warnings into `zurds_decompression_error`. Read
+  source bytes only through `zrd_source_call()`, or a codec warning
+  escapes as a plain warning.
+- Never decompress input with `memDecompress()`: with zlib (Linux R
+  without libdeflate) it doubles its buffer forever on truncated gzip, and
+  the process is killed. Compressed raw vectors go through a temporary file
+  and `gzfile()` instead.
 - Gates need canaries: a new gate is trusted only once it has failed on a
   planted defect.
 
@@ -83,8 +105,11 @@ R objects are made from stream content. R-side conditions are built in
 - Global state through `withr::local_*()`; write only under `tempdir()`.
 - Assert on condition classes, never message text.
 - `devtools::test(shuffle = TRUE)` is part of done.
-- The oracle is R itself: fixtures are written by `tools/make-fixtures.R`
-  (Stage 1), and data-only reads must be `identical()` to `readRDS()`.
+- The oracle is R itself: fixtures are written by `tools/make-fixtures.R`,
+  and data-only reads must be `identical()` to `readRDS()`. Tests iterate
+  over `fixture_manifest()` (`helper-fixtures.R`), so they run on the small
+  checked-in set by default and on the full matrix when `ZURDS_FIXTURES`
+  is set. Never edit `tests/testthat/fixtures/` by hand; regenerate it.
 
 ## Definition of done
 
@@ -113,7 +138,9 @@ Calls `pedrobtz/r-actions` at `@v1`: `r-cmd-check.yml` (R-CMD-check),
 `coverage.yml`, and in `native-checks.yaml` `sanitizers.yml`,
 `valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml` (with
 `github-packages: pedrobtz/zufast`), `analyzers.yml`, `cran-special.yml`.
-`gates.yaml` runs `tools/check-symbols` and its canary.
+`gates.yaml` runs `tools/check-symbols` and its canary. `fixtures.yaml`
+regenerates the fixtures on oldrel, release and devel, checks the
+checked-in manifest, and runs the suite on the full matrix.
 
 ## Commits and pull requests
 
