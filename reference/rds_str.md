@@ -45,7 +45,8 @@ reach outside the file are named, never followed.
 ## See also
 
 Other inspection:
-[`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md)
+[`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md),
+[`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md)
 
 ## Examples
 

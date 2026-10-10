@@ -15,3 +15,6 @@
   file from its stream alone, without building any object or running any
   code. It reads XDR, native binary (either byte order) and ASCII
   streams.
+- [`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md)
+  lists the objects of an `.rda` file, with their types, classes,
+  lengths, dimensions, sizes and offsets, without building any of them.

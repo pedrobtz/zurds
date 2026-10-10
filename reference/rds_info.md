@@ -57,7 +57,8 @@ A list of class `rds_info` with elements:
 ## See also
 
 Other inspection:
-[`rds_str()`](https://pedrobtz.github.io/zurds/reference/rds_str.md)
+[`rds_str()`](https://pedrobtz.github.io/zurds/reference/rds_str.md),
+[`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md)
 
 ## Examples
 
