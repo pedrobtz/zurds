@@ -43,7 +43,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Stage 0 (package identity) only, 2026-10-10: <code><a href="reference/zurds_info.html">zurds_info()</a></code>, the condition classes, symbol hiding and its gate. No source, walk, scanner or builder yet. See the roadmap’s stage table for what is done.</p>
+<p>Stages 0 and 1, 2026-10-10: <code><a href="reference/zurds_info.html">zurds_info()</a></code>, the condition classes, symbol hiding and its gate; the source (<code>R/source.R</code>, <code>src/zrd_source.c</code>, <code>src/zrd_reader.c</code>) that opens a path, raw vector or connection, detects the kind and compression and reads decompressed bytes in 64 KiB blocks; and the fixture generator. No walk, scanner or builder yet. See the roadmap’s stage table for what is done.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-tracking">Stage tracking<a class="anchor" aria-label="anchor" href="#stage-tracking"></a></h2>
@@ -66,11 +66,14 @@
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::check()'</span>                   <span class="co"># R CMD check</span></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a><span class="ex">air</span> format .                                     <span class="co"># format R sources</span></span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a><span class="ex">tools/check-symbols</span> <span class="op">&lt;</span>path/to/zurds.so<span class="op">&gt;</span>           <span class="co"># on an R CMD INSTALL build</span></span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="ex">tools/check-symbols</span> <span class="at">--canary</span>                     <span class="co"># the gate must reject this</span></span></code></pre></div>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a><span class="ex">tools/check-symbols</span> <span class="at">--canary</span>                     <span class="co"># the gate must reject this</span></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="ex">Rscript</span> tools/make-fixtures.R                    <span class="co"># rewrite tests/testthat/fixtures</span></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="ex">Rscript</span> tools/make-fixtures.R <span class="at">--full</span> DIR         <span class="co"># the full matrix, into DIR</span></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="va">ZURDS_FIXTURES</span><span class="op">=</span>DIR <span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span> <span class="co"># the suite against DIR</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
-<p>See design §4. <code>src/init.c</code> registers <code>.Call</code> routines and is the only exported symbol. Internal C symbols use the <code>zrd_</code> / <code>ZRD_</code> prefix. The walk (<code>src/zrd_walk.c</code>, from Stage 2) is R-free and must compile with <code>-DZRD_STANDALONE</code>; the data builder (<code>src/zrd_build.c</code>) is the only place R objects are made from stream content. R-side conditions are built in <code>R/conditions.R</code> by <code>zrd_abort()</code>; the class chain lives in <code>zrd_condition_classes</code>. Default limits live in <code>zrd_default_limits()</code>.</p>
+<p>See design §4. Every user-facing function starts with <code>zrd_open()</code> in <code>R/source.R</code>: it detects compression from the file’s magic bytes, opens the file with <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile()</a></code> (which decompresses everything R writes), wraps the connection or raw vector in a <code>zrd_source</code> external pointer, and detects the kind from the first decompressed bytes. <code>src/zrd_reader.c</code> is the R-free buffered reader the walk will consume; <code>src/zrd_source.c</code> is the R side that fills it with <code>R_ReadConnection()</code>. <code>src/init.c</code> registers <code>.Call</code> routines and is the only exported symbol. Internal C symbols use the <code>zrd_</code> / <code>ZRD_</code> prefix. The walk (<code>src/zrd_walk.c</code>, from Stage 2) is R-free and must compile with <code>-DZRD_STANDALONE</code>; the data builder (<code>src/zrd_build.c</code>) is the only place R objects are made from stream content. R-side conditions are built in <code>R/conditions.R</code> by <code>zrd_abort()</code>; the class chain lives in <code>zrd_condition_classes</code>. Default limits live in <code>zrd_default_limits()</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="invariants-that-are-easy-to-break">Invariants that are easy to break<a class="anchor" aria-label="anchor" href="#invariants-that-are-easy-to-break"></a></h2>
@@ -79,6 +82,8 @@
 <li>The walk never allocates an R object or calls R. Anything R-specific goes behind <code>#ifndef ZRD_STANDALONE</code>.</li>
 <li>Limits are checked before a length from the file is trusted, never after.</li>
 <li>An unknown pseudo-type is a parse error, never a skip.</li>
+<li>R’s codecs do not fail loudly on truncated input: through <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile()</a></code>, gzip reads short, bzip2 and zstd read nothing, and xz warns. <code>R/source.R</code> checks the gzip trailer’s ISIZE, the xz footer and empty output, and turns codec warnings into <code>zurds_decompression_error</code>. Read source bytes only through <code>zrd_source_call()</code>, or a codec warning escapes as a plain warning.</li>
+<li>Never decompress input with <code><a href="https://rdrr.io/r/base/memCompress.html" class="external-link">memDecompress()</a></code>: with zlib (Linux R without libdeflate) it doubles its buffer forever on truncated gzip, and the process is killed. Compressed raw vectors go through a temporary file and <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile()</a></code> instead.</li>
 <li>Gates need canaries: a new gate is trusted only once it has failed on a planted defect.</li>
 </ul></div>
 <div class="section level2">
@@ -88,7 +93,7 @@
 <li>Assert on condition classes, never message text.</li>
 <li>
 <code>devtools::test(shuffle = TRUE)</code> is part of done.</li>
-<li>The oracle is R itself: fixtures are written by <code>tools/make-fixtures.R</code> (Stage 1), and data-only reads must be <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>.</li>
+<li>The oracle is R itself: fixtures are written by <code>tools/make-fixtures.R</code>, and data-only reads must be <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>. Tests iterate over <code>fixture_manifest()</code> (<code>helper-fixtures.R</code>), so they run on the small checked-in set by default and on the full matrix when <code>ZURDS_FIXTURES</code> is set. Never edit <code>tests/testthat/fixtures/</code> by hand; regenerate it.</li>
 </ul></div>
 <div class="section level2">
 <h2 id="definition-of-done">Definition of done<a class="anchor" aria-label="anchor" href="#definition-of-done"></a></h2>
@@ -108,7 +113,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="continuous-integration">Continuous integration<a class="anchor" aria-label="anchor" href="#continuous-integration"></a></h2>
-<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code> (with <code>github-packages: pedrobtz/zufast</code>), <code>analyzers.yml</code>, <code>cran-special.yml</code>. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary.</p>
+<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code> (with <code>github-packages: pedrobtz/zufast</code>), <code>analyzers.yml</code>, <code>cran-special.yml</code>. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary. <code>fixtures.yaml</code> regenerates the fixtures on oldrel, release and devel, checks the checked-in manifest, and runs the suite on the full matrix.</p>
 </div>
 <div class="section level2">
 <h2 id="commits-and-pull-requests">Commits and pull requests<a class="anchor" aria-label="anchor" href="#commits-and-pull-requests"></a></h2>
