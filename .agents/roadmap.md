@@ -31,7 +31,7 @@ Rules that hold for every stage:
 | 2 | The walk: data items in XDR | L | #4 | 2026-10-10 | [#19](https://github.com/pedrobtz/zurds/pull/19) |
 | 3 | The walk: code, environments and ALTREP | M | #5 | 2026-10-10 | [#20](https://github.com/pedrobtz/zurds/pull/20) |
 | 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 | 2026-10-10 | [#21](https://github.com/pedrobtz/zurds/pull/21) |
-| 5 | Table of contents for .rda files | M | #7 | 2026-10-10 | |
+| 5 | Table of contents for .rda files | M | #7 | 2026-10-10 | [#22](https://github.com/pedrobtz/zurds/pull/22) |
 | 6 | The scanner and rds_deps() | M | #8 | | |
 | 7 | The data-only builder and rds_read_data() | M | #9 | | |
 | 8 | Extraction | M | #10 | | |
