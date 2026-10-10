@@ -24,4 +24,4 @@ jobs:
       expect-pattern: "cannot allocate|memory exhausted|out of memory"
       target-pattern: "out of memory for|cannot allocate a zurds|cannot allocate the walk"
       min-target-hits: 1
-      max-allocations: 300
+      max-allocations: 600
