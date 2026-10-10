@@ -51,7 +51,13 @@ zrd_detect_wrapper <- function(head) {
 # The lazy-load base of `path` ("pkg" for "pkg", "pkg.rdb" or "pkg.rdx"),
 # or NULL when there is no .rdb / .rdx pair.
 zrd_lazyload_base <- function(path) {
-  base <- sub("[.]rd[bx]$", "", path)
+  # No regular expression: this runs on every path, and TRE allocates.
+  n <- nchar(path)
+  base <- if (n > 4L && substr(path, n - 3L, n) %in% c(".rdb", ".rdx")) {
+    substr(path, 1L, n - 4L)
+  } else {
+    path
+  }
   if (file.exists(paste0(base, ".rdx")) && file.exists(paste0(base, ".rdb"))) {
     base
   } else {

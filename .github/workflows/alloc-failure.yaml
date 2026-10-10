@@ -1,0 +1,34 @@
+# Fails each allocation of tools/alloc-exercise.R in turn and checks that R
+# reports an error rather than dying: the walk's out-of-memory paths, which
+# no ordinary test reaches. Weekly, and on a pull request that changes this
+# file or the C sources' allocation code paths.
+on:
+  schedule:
+    - cron: "0 4 * * 0"
+  pull_request:
+    paths:
+      - ".github/workflows/alloc-failure.yaml"
+      - "tools/alloc-exercise.R"
+  workflow_dispatch:
+
+name: alloc-failure
+
+permissions: read-all
+
+jobs:
+  alloc-failure:
+    uses: pedrobtz/r-actions/.github/workflows/alloc-failure.yml@v1
+    with:
+      # No JIT: a failed allocation in R's byte-code compiler kills R
+      # itself, which is a finding about R (r-actions alloc-failure docs).
+      baseline-run: R_ENABLE_JIT=0 Rscript tools/alloc-exercise.R --baseline
+      run: R_ENABLE_JIT=0 Rscript tools/alloc-exercise.R
+      # R's own wordings for a failed allocation, as well as zurds', and
+      # the shell's ("xmalloc: out of virtual memory") when sh -c is hit.
+      expect-pattern: "[Cc]annot allocate|memory exhausted|[Oo]ut of (virtual )?memory|out-of-memory|allocation of .* failed|cannot open the connection"
+      target-pattern: "out of memory for|cannot allocate a zurds|cannot allocate the walk"
+      min-target-hits: 1
+      # The workload adds about 2,900 allocations above the floor (measured
+      # 2026-10-10); zurds' own come among them, so the sweep covers them all.
+      max-allocations: 3000
+      timeout-minutes: 90
