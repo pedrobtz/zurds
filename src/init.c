@@ -8,6 +8,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"zrd_source_new",    (DL_FUNC) &zrd_source_new,    1},
     {"zrd_source_peek",   (DL_FUNC) &zrd_source_peek,   2},
     {"zrd_source_drain",  (DL_FUNC) &zrd_source_drain,  1},
+    {"zrd_walk_stats",    (DL_FUNC) &zrd_walk_stats,    3},
     {NULL, NULL, 0}
 };
 
