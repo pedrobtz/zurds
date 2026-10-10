@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include <zufast/bits.h>
+#include <zufast/number.h>
 
 #include "zrd_walk.h"
 
@@ -54,6 +55,7 @@ struct zrd_frame {
     int tail_attr;         /* PH_SEQ: then attributes, if flagged */
     int64_t reps;          /* BCODESXP: ReadBC's reps vector length */
     int bcl_attr;          /* FK_BCLANG: an ATTRLANGSXP or ATTRLISTSXP */
+    int ref_symbol;        /* a REFSXP to a symbol, named name_off/len */
     const char *lead;      /* a continued pairlist: "@body" after a
                               closure's cell, "@code" after a promise's */
 };
@@ -98,14 +100,65 @@ static uint64_t here(const zrd_walk *w)
     return zrd_reader_offset(w->in) - w->base;
 }
 
-/* serialize.c, InInteger (XDR: R_XDRDecodeInteger). */
+/* ---- the ASCII format ----------------------------------------------- */
+
+static int is_space(int c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
+}
+
+/* serialize.c, InWord: skips white space, then reads one word into `buf`
+ * (0-terminated), and consumes the white-space character that ends it, as
+ * R does. A word as long as the buffer is an error, as in R. */
+static zrd_status in_word(zrd_walk *w, char *buf, size_t cap, size_t *len)
+{
+    uint8_t c;
+    do {
+        if (zrd_reader_read(w->in, &c, 1) != 1)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends before a word");
+    } while (is_space(c));
+    size_t n = 0;
+    for (;;) {
+        if (n + 1 >= cap) return fail(w, ZRD_ERR_PARSE, "a word is too long");
+        buf[n++] = (char) c;
+        if (zrd_reader_read(w->in, &c, 1) != 1 || is_space(c)) break;
+    }
+    buf[n] = '\0';
+    *len = n;
+    return ZRD_OK;
+}
+
+/* ---- tokens -------------------------------------------------------- */
+
+static int32_t from_u32(uint32_t u)
+{
+    return u <= INT32_MAX ? (int32_t) u : -(int32_t) (~u) - 1;
+}
+
+/* serialize.c, InInteger: four big-endian bytes (XDR), four bytes in the
+ * writer's order (binary), or a decimal word or "NA" (ASCII). */
 static zrd_status in_int(zrd_walk *w, int32_t *out)
 {
+    if (w->header.format == ZRD_FORMAT_ASCII) {
+        char word[128];
+        size_t n;
+        zrd_status st = in_word(w, word, sizeof word, &n);
+        if (st) return st;
+        if (strcmp(word, "NA") == 0) {
+            *out = INT32_MIN;
+            return ZRD_OK;
+        }
+        zuf_result r = zuf_parse_i32(word, word + n, out);
+        if (r.status != ZUF_OK || r.ptr != word + n)
+            return fail(w, ZRD_ERR_PARSE, "an integer is not a number");
+        return ZRD_OK;
+    }
     uint8_t b[4];
     if (zrd_reader_read(w->in, b, 4) != 4)
         return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside an integer");
-    uint32_t u = zuf_load_be32(b);
-    *out = u <= INT32_MAX ? (int32_t) u : -(int32_t) (~u) - 1;
+    uint32_t u = w->header.format == ZRD_FORMAT_BINARY && !w->big_endian
+        ? zuf_load_le32(b) : zuf_load_be32(b);
+    *out = from_u32(u);
     return ZRD_OK;
 }
 
@@ -125,10 +178,10 @@ static zrd_status skip(zrd_walk *w, uint64_t n, const char *what)
     return ZRD_OK;
 }
 
-/* The bytes an XDR vector of `n` elements of `type` takes, or 0 for a
- * type whose elements are items. serialize.c, InIntegerVec, InRealVec,
- * InComplexVec, and the RAWSXP case of ReadItem_Recursive. */
-static uint64_t xdr_elt_size(int type)
+/* The bytes an XDR or binary vector element of `type` takes: serialize.c,
+ * InIntegerVec, InRealVec, InComplexVec, and the RAWSXP case of
+ * ReadItem_Recursive. In ASCII each is one word (two for complex). */
+static uint64_t elt_size(int type)
 {
     switch (type) {
     case ZRD_LGLSXP: case ZRD_INTSXP: return 4;
@@ -137,6 +190,110 @@ static uint64_t xdr_elt_size(int type)
     case ZRD_RAWSXP: return 1;
     default: return 0;
     }
+}
+
+/* The least number of bytes `len` elements of `type` can take in this
+ * format: what max_size is checked against. An ASCII word takes at least
+ * a character and a separator. */
+static double min_vector_bytes(const zrd_walk *w, int type, int64_t len)
+{
+    if (w->header.format == ZRD_FORMAT_ASCII)
+        return 2.0 * (double) len * (type == ZRD_CPLXSXP ? 2 : 1);
+    return (double) len * (double) elt_size(type);
+}
+
+/* Skips the payload of an atomic vector. */
+static zrd_status skip_vector(zrd_walk *w, int type, int64_t len)
+{
+    if (w->header.format != ZRD_FORMAT_ASCII)
+        return skip(w, (uint64_t) len * elt_size(type), "a vector");
+    int64_t words = len * (type == ZRD_CPLXSXP ? 2 : 1);
+    char word[128];
+    size_t n;
+    for (int64_t i = 0; i < words; i++) {
+        zrd_status st = in_word(w, word, sizeof word, &n);
+        if (st) return st;
+        if (w->tick && i % TICK_EVERY == TICK_EVERY - 1) w->tick(w->tick_ctx);
+    }
+    return ZRD_OK;
+}
+
+/* Puts a decoded byte of the current string. */
+static void put_char(zrd_walk *w, char *dst, size_t dst_len, size_t i, char c)
+{
+    if (dst && i < dst_len) dst[i] = c;
+    if (w->string_cap && i < w->string_cap) w->string_buf[i] = c;
+}
+
+/* serialize.c, InString: `len` bytes (XDR, binary), or `len` characters
+ * after white space with C escapes decoded (ASCII). The first `dst_len`
+ * go to `dst` when given, and the first string_cap to the capture buffer
+ * when strings are captured. */
+static zrd_status in_string(zrd_walk *w, int64_t len, char *dst, size_t dst_len)
+{
+    w->string_len = 0;
+    w->string_complete = 1;
+    if (w->string_cap) {
+        w->string_len = (size_t) len < w->string_cap ? (size_t) len : w->string_cap;
+        w->string_complete = (size_t) len <= w->string_cap;
+    }
+    if (w->header.format != ZRD_FORMAT_ASCII) {
+        /* Read what is kept, through a small buffer; skip the rest. */
+        uint64_t keep = dst ? dst_len : 0, i = 0;
+        if (w->string_len > keep) keep = w->string_len;
+        if (keep > (uint64_t) len) keep = (uint64_t) len;
+        uint8_t tmp[4096];
+        while (i < keep) {
+            size_t take = keep - i < sizeof tmp ? (size_t) (keep - i) : sizeof tmp;
+            if (zrd_reader_read(w->in, tmp, take) != take)
+                return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a string");
+            for (size_t j = 0; j < take; j++) put_char(w, dst, dst_len, (size_t) i + j, (char) tmp[j]);
+            i += take;
+        }
+        return skip(w, (uint64_t) len - keep, "a string");
+    }
+    if (len == 0) return ZRD_OK;
+    uint8_t c;
+    do {
+        if (zrd_reader_read(w->in, &c, 1) != 1)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a string");
+    } while (is_space(c));
+    for (int64_t i = 0; i < len; i++) {
+        if (i > 0 && zrd_reader_read(w->in, &c, 1) != 1)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a string");
+        if (c != '\\') {
+            put_char(w, dst, dst_len, (size_t) i, (char) c);
+            continue;
+        }
+        if (zrd_reader_read(w->in, &c, 1) != 1)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a string");
+        char out;
+        switch (c) {
+        case 'n': out = '\n'; break;
+        case 't': out = '\t'; break;
+        case 'v': out = '\v'; break;
+        case 'b': out = '\b'; break;
+        case 'r': out = '\r'; break;
+        case 'f': out = '\f'; break;
+        case 'a': out = '\a'; break;
+        case '0': case '1': case '2': case '3':
+        case '4': case '5': case '6': case '7': {
+            int d = c - '0', j = 1;
+            uint8_t next;
+            while (j < 3 && zrd_reader_peek(w->in, &next, 1) == 1 &&
+                   next >= '0' && next < '8') {
+                zrd_reader_read(w->in, &next, 1);
+                d = d * 8 + (next - '0');
+                j++;
+            }
+            out = (char) d;
+            break;
+        }
+        default: out = (char) c; /* \\, \?, \', \" and anything else */
+        }
+        put_char(w, dst, dst_len, (size_t) i, out);
+    }
+    return ZRD_OK;
 }
 
 /* Checks that `need` more bytes fit under max_size. Called before a
@@ -226,6 +383,16 @@ static zrd_status emit_at(zrd_walk *w, zrd_event_kind kind, const zrd_frame *f,
     ev.index = f->index;
     ev.ref = ref;
     ev.ref_type = ref_type;
+    if (kind == ZRD_EVENT_END && f->type == ZRD_REFSXP && f->ref_symbol) {
+        ev.data = w->arena + f->name_off;
+        ev.data_len = f->name_len;
+        ev.data_complete = 1;
+    }
+    if (kind == ZRD_EVENT_END && f->type == ZRD_CHARSXP && w->string_cap) {
+        ev.data = w->string_buf;
+        ev.data_len = f->length > 0 ? w->string_len : 0;
+        ev.data_complete = f->length > 0 ? w->string_complete : 1;
+    }
     if (f->role == ZRD_ROLE_CAR && parent && parent->has_name) {
         ev.name = w->arena + parent->name_off;
         ev.name_len = parent->name_len;
@@ -330,6 +497,11 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
             return fail(w, ZRD_ERR_BAD_REF, "reference index out of range");
         ref = i;
         ref_type = w->refs[i - 1].type;
+        if (ref_type == ZRD_SYMSXP) {
+            f->ref_symbol = 1;
+            f->name_off = w->refs[i - 1].name_off;
+            f->name_len = w->refs[i - 1].name_len;
+        }
         /* A tag given by reference names its cell like a symbol does. */
         if (role == ZRD_ROLE_TAG && ref_type == ZRD_SYMSXP && parent) {
             parent->has_name = 1;
@@ -356,12 +528,11 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
         if (len > 0 && parent && parent->type == ZRD_SYMSXP) {
             size_t off;
             if ((st = arena_append(w, (size_t) len, &off))) return st;
-            if (zrd_reader_read(w->in, w->arena + off, (size_t) len) != (size_t) len)
-                return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a string");
+            if ((st = in_string(w, len, w->arena + off, (size_t) len))) return st;
             parent->has_name = 1;
             parent->name_off = off;
             parent->name_len = (size_t) len;
-        } else if (len > 0 && (st = skip(w, (uint64_t) len, "a string"))) {
+        } else if ((st = in_string(w, len > 0 ? len : 0, NULL, 0))) {
             return st;
         }
         f->phase = ZRD_HAS_ATTR(flags) ? PH_ATTR : PH_DONE;
@@ -373,10 +544,9 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
         int64_t len;
         if ((st = in_length(w, &len))) return st;
         f->length = len;
-        uint64_t size = xdr_elt_size(f->type);
-        if ((st = check_size(w, (double) len * (double) size))) return st;
+        if ((st = check_size(w, min_vector_bytes(w, f->type, len)))) return st;
         if ((st = emit(w, ZRD_EVENT_BEGIN, f, w->depth - 1, parent, 0, 0))) return st;
-        if ((st = skip(w, (uint64_t) len * size, "a vector"))) return st;
+        if ((st = skip_vector(w, f->type, len))) return st;
         f->phase = ZRD_HAS_ATTR(flags) ? PH_ATTR : PH_DONE;
         return ZRD_OK;
     }
@@ -448,7 +618,7 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
         if ((st = check_size(w, (double) len))) return st;
         f->length = len;
         if ((st = emit(w, ZRD_EVENT_BEGIN, f, w->depth - 1, parent, 0, 0))) return st;
-        if ((st = skip(w, (uint64_t) len, "a primitive's name"))) return st;
+        if ((st = in_string(w, len, NULL, 0))) return st;
         f->phase = attr_or_done(f);
         return ZRD_OK;
     }
@@ -749,8 +919,20 @@ zrd_status zrd_walk_init(zrd_walk *w, zrd_reader *in, const zrd_limits *lim,
     return ZRD_OK;
 }
 
+zrd_status zrd_walk_capture_strings(zrd_walk *w, size_t cap)
+{
+    if (cap == 0) return ZRD_OK;
+    w->string_buf = malloc(cap);
+    if (w->string_buf == NULL) return fail(w, ZRD_ERR_NOMEM, "out of memory for strings");
+    w->string_cap = cap;
+    return ZRD_OK;
+}
+
 void zrd_walk_free(zrd_walk *w)
 {
+    free(w->string_buf);
+    w->string_buf = NULL;
+    w->string_cap = 0;
     free(w->stack);
     free(w->refs);
     free(w->arena);
@@ -759,7 +941,9 @@ void zrd_walk_free(zrd_walk *w)
     w->arena = NULL;
 }
 
-/* serialize.c, InFormat and the version switch of R_Unserialize. */
+/* serialize.c, InFormat and the version switch of R_Unserialize. The
+ * binary format is in the writer's byte order, which the stream does not
+ * record: the version, 2 or 3, tells it. */
 zrd_status zrd_walk_header(zrd_walk *w)
 {
     uint8_t fmt[2];
@@ -768,8 +952,15 @@ zrd_status zrd_walk_header(zrd_walk *w)
     if (fmt[1] != '\n' || (fmt[0] != 'X' && fmt[0] != 'B' && fmt[0] != 'A'))
         return fail(w, ZRD_ERR_FORMAT, "unknown stream format");
     w->header.format = fmt[0];
-    if (fmt[0] != ZRD_FORMAT_XDR)
-        return fail(w, ZRD_ERR_UNSUPPORTED, "only the XDR format is walked yet");
+    if (fmt[0] == ZRD_FORMAT_BINARY) {
+        uint8_t b[4];
+        if (zrd_reader_peek(w->in, b, 4) != 4)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside its header");
+        uint32_t le = zuf_load_le32(b), be = zuf_load_be32(b);
+        if (le == 2 || le == 3) w->big_endian = 0;
+        else if (be == 2 || be == 3) w->big_endian = 1;
+        else return fail(w, ZRD_ERR_FORMAT, "unsupported serialization version");
+    }
     int32_t v, wv, mv;
     zrd_status st;
     if ((st = in_int(w, &v)) || (st = in_int(w, &wv)) || (st = in_int(w, &mv)))
@@ -782,8 +973,11 @@ zrd_status zrd_walk_header(zrd_walk *w)
         if ((st = in_int(w, &n))) return st;
         if (n < 0 || n >= (int32_t) sizeof w->header.native_encoding)
             return fail(w, ZRD_ERR_FORMAT, "invalid length of encoding name");
-        if (zrd_reader_read(w->in, w->header.native_encoding, (size_t) n) != (size_t) n)
-            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside its header");
+        size_t cap = w->string_cap;
+        w->string_cap = 0;
+        st = in_string(w, n, w->header.native_encoding, (size_t) n);
+        w->string_cap = cap;
+        if (st) return st;
         w->header.native_encoding[n] = '\0';
     } else if (v != 2) {
         char msg[64];
@@ -797,6 +991,13 @@ zrd_status zrd_walk_item(zrd_walk *w)
 {
     zrd_status st = begin_next(w, ZRD_ROLE_ROOT, 0);
     while (st == ZRD_OK && w->depth > 0) st = step(w);
+    /* ASCII leaves the newline after a final string, which R's reader
+     * leaves too; take it, so the walk ends where the stream does. */
+    if (st == ZRD_OK && w->header.format == ZRD_FORMAT_ASCII) {
+        uint8_t c;
+        while (zrd_reader_peek(w->in, &c, 1) == 1 && is_space(c))
+            zrd_reader_read(w->in, &c, 1);
+    }
     if (st == ZRD_OK) w->status = ZRD_OK;
     return st;
 }

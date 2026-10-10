@@ -73,7 +73,7 @@ zrd_walk_info <- function(x, kind = NULL,
                            max_depth = zrd_default_limits()$max_depth,
                            max_items = zrd_default_limits()$max_items,
                            max_size = zrd_default_limits()$max_size,
-                           call = parent.frame()) {
+                           call = NULL) {
   limits <- zrd_limits(max_depth, max_items, max_size, call)
   input <- zrd_open(x, kind, call)
   on.exit(zrd_close(input))

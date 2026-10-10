@@ -97,9 +97,7 @@ test_that("errors name the path of the item at fault", {
   expect_identical(cnd$path, "[[2]][[2]]")
 })
 
-test_that("other formats and versions are refused for now", {
-  expect_error(zrd_walk_info(serialize(1, NULL, xdr = FALSE)), class = "zurds_parse_error")
-  expect_error(zrd_walk_info(serialize(1, NULL, ascii = TRUE)), class = "zurds_parse_error")
+test_that("unknown versions are refused", {
   bad <- serialize(1, NULL)
   bad[6] <- as.raw(9)
   expect_error(zrd_walk_info(bad), class = "zurds_format_error")
