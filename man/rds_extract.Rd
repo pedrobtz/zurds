@@ -53,17 +53,18 @@ class \code{zurds_not_found}; content the data-only reader refuses is
 }
 
 \examples{
-f <- tempfile(fileext = ".rda")
-cars <- mtcars
-fit <- list(coefficients = c(a = 1, b = 2), call = quote(lm(y ~ x)))
-save(cars, fit, file = f)
-head(rds_extract(f, "cars"))
+f <- system.file("extdata", "objects.rda", package = "zurds")
+rds_extract(f, "cars")
 rds_extract(f, c("cars", "mpg"))
-rds_extract(f, c("fit", "coefficients"))
 
-g <- tempfile(fileext = ".rds")
-saveRDS(list(a = 1, b = list(10, 20)), g)
-rds_extract(g, list("b", 2))
+m <- system.file("extdata", "model.rds", package = "zurds")
+rds_extract(m, list("fit", "coefficients"))
+
+# The model as a whole holds a formula and its environment: refused by the
+# data-only reader, read by R itself when you trust the file.
+try(rds_extract(m, "fit"))
+fit <- rds_extract(m, "fit", use_r = TRUE)
+attr(fit, "zurds_findings")
 }
 \seealso{
 Other reading:

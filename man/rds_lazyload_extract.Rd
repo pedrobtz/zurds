@@ -27,10 +27,9 @@ code is refused, never evaluated.
 }
 
 \examples{
-db <- file.path(system.file("R", package = "stats"), "stats")
-toc <- rds_lazyload_toc(db)
-data_only <- toc$name[!toc$risky & toc$type \%in\% c("character", "list")]
-if (length(data_only)) str(rds_lazyload_extract(db, data_only[1]))
+db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+rds_lazyload_extract(db, "table")
+try(rds_lazyload_extract(db, "helper"))
 }
 \seealso{
 Other lazy-load:

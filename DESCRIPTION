@@ -21,10 +21,13 @@ Depends:
 LinkingTo: 
     zufast (>= 0.1.0)
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0),
     withr
 Remotes: 
     pedrobtz/zufast
+VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
 Language: en-GB

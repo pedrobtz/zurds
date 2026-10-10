@@ -1,0 +1,105 @@
+---
+title: "Reading R files from elsewhere"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Reading R files from elsewhere}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+```
+
+```{r setup}
+library(zurds)
+ex <- function(f) system.file("extdata", f, package = "zurds")
+```
+
+An `.rds` or `.rda` file is a serialized R object, and R objects can hold
+code. `readRDS()` and `load()` rebuild everything in the file: closures,
+environments, promises. Since R 4.4.0 a promise at the top level of a file
+is refused (CVE-2024-27322), but a promise nested in a list, a closure or
+an environment still loads, and runs when used.
+
+zurds reads the file without R's deserializer. This vignette shows how to
+look before you load, and what its data-only reader does and does not
+promise.
+
+## Look first
+
+`rds_info()` reads only the header. `rds_str()` and `rds_toc()` walk the
+whole stream but build nothing: a 2 GB `.rda` costs the time to decompress
+it, not the memory to hold it.
+
+```{r}
+rds_info(ex("model.rds"))
+rds_str(ex("model.rds"))
+rds_toc(ex("objects.rda"))
+```
+
+## Scan
+
+`rds_scan()` lists everything that can run code (`"executes"`), reach
+outside the file (`"reaches_out"`), or needs a package to load
+(`"needs_package"`), with where it is:
+
+```{r}
+rds_scan(ex("model.rds"))
+rds_scan(ex("promise.rds"))
+rds_deps(serialize(stats::sd, NULL))
+```
+
+A linear model carries its formula's environment: loading it gives you
+that environment back. The second file holds a promise whose code would
+call `system()`.
+
+## Read data, refuse code
+
+`rds_read_data()` is a reader written in C that builds only `NULL`,
+logical, integer, double, complex, character, raw and list vectors, with
+their attributes. For a data-only file its result is `identical()` to
+`readRDS()`.
+
+```{r}
+identical(rds_read_data(ex("iris.rds")), readRDS(ex("iris.rds")))
+```
+
+Anything else is an error, with the scan attached:
+
+```{r}
+cnd <- tryCatch(rds_read_data(ex("promise.rds")),
+                zurds_unsafe_content = function(e) e)
+cnd$findings
+```
+
+or, with `strict = FALSE`, replaced by `NULL` with a warning:
+
+```{r}
+rds_read_data(ex("promise.rds"), strict = FALSE)
+```
+
+`rds_extract()` reads one object, list element or column the same way,
+and `rds_lazyload_extract()` one object of a lazy-load database.
+
+## What the guarantee covers
+
+`rds_read_data()`:
+
+1. never calls `unserialize()`, `eval()` or any function from the file;
+2. builds only the types above, with attributes of those types; a
+   `class` attribute is kept, and no method of that class is called while
+   building;
+3. refuses, or with `strict = FALSE` drops, every other type;
+4. checks every length and depth against its limits before allocating.
+
+What it does not cover: once you have the object, your own code may
+dispatch on its class to methods you have loaded. A data frame is still a
+data frame, and a class name from the file can still select a `print()`
+method in your session. That is your code, not the file's.
+
+`rds_scan()` and `rds_is_safe()` are advisory for `readRDS()`: a clean
+scan means the file holds no type that runs code as it loads, but
+`readRDS()` still creates objects of the file's classes. When you trust a
+file's code, `rds_extract(use_r = TRUE)` hands one item, and only that
+item, to R's own reader, with its scan attached.

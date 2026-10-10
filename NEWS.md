@@ -20,3 +20,6 @@
   without building the rest; `use_r = TRUE` hands only that item to R.
 * `rds_lazyload_toc()` and `rds_lazyload_extract()` list and read lazy-load
   databases, such as an installed package's, without forcing promises.
+* `vignette("safe-reading")` explains how to look at, scan and read files
+  from elsewhere, and what the data-only reader does and does not
+  guarantee.

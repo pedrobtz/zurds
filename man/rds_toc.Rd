@@ -38,12 +38,7 @@ stream, without building any of them. Nothing in the file is evaluated,
 and memory stays small however large the objects are.
 }
 \examples{
-f <- tempfile(fileext = ".rda")
-x <- 1:10
-cars <- mtcars
-m <- matrix(0, 3, 4)
-save(x, cars, m, file = f)
-rds_toc(f)
+rds_toc(system.file("extdata", "objects.rda", package = "zurds"))
 }
 \seealso{
 Other inspection:

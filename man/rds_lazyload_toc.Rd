@@ -23,8 +23,12 @@ loading any of them. Unlike \code{\link[=lazyLoad]{lazyLoad()}}, nothing is eval
 that is a promise is reported as one, never forced.
 }
 \examples{
-db <- file.path(system.file("R", package = "stats"), "stats")
-head(rds_lazyload_toc(db))
+db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+rds_lazyload_toc(db)
+
+# An installed package's own database:
+stats <- file.path(system.file("R", package = "stats"), "stats")
+head(rds_lazyload_toc(stats))
 }
 \seealso{
 Other lazy-load:

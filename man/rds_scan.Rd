@@ -56,13 +56,13 @@ still creates objects of the file's classes, and using them can call
 methods you have loaded.
 }
 \examples{
-f <- tempfile(fileext = ".rds")
-saveRDS(list(data = mtcars, model = lm(mpg ~ wt, mtcars)), f)
-head(rds_scan(f))
-rds_is_safe(f)
+rds_scan(system.file("extdata", "model.rds", package = "zurds"))
+rds_is_safe(system.file("extdata", "iris.rds", package = "zurds"))
 
-saveRDS(mtcars, f)
-rds_is_safe(f)
+# A promise that would run system() when used:
+promise <- system.file("extdata", "promise.rds", package = "zurds")
+rds_scan(promise)
+rds_is_safe(promise)
 }
 \seealso{
 Other safety:

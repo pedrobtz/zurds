@@ -32,11 +32,10 @@ decompressed, for example because it is truncated.}
 }
 }
 \examples{
-tryCatch(
-  stop(structure(
-    class = c("zurds_format_error", "zurds_error", "error", "condition"),
-    list(message = "not an R serialization file", call = NULL)
-  )),
-  zurds_error = function(e) class(e)
-)
+f <- system.file("extdata", "promise.rds", package = "zurds")
+cnd <- tryCatch(rds_read_data(f), zurds_unsafe_content = function(e) e)
+class(cnd)
+cnd$findings
+
+tryCatch(rds_info(charToRaw("not R")), zurds_format_error = conditionMessage)
 }
