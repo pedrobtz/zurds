@@ -1,10 +1,14 @@
 <urlset xmlns = 'http://www.sitemaps.org/schemas/sitemap/0.9'>
 <url><loc>https://pedrobtz.github.io/zurds/404.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zurds/CLAUDE.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/LICENSE-text.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/LICENSE.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/authors.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/index.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/news/index.html</loc></url>
 <url><loc>https://pedrobtz.github.io/zurds/reference/index.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zurds/reference/zurds-conditions.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zurds/reference/zurds-package.html</loc></url>
+<url><loc>https://pedrobtz.github.io/zurds/reference/zurds_info.html</loc></url>
 </urlset>
 

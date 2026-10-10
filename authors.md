@@ -2,17 +2,21 @@
 
 ## Authors
 
-- **First Last**. Author, maintainer.
+- **Pedro Baltazar**. Author, maintainer, copyright holder.
 
 ## Citation
 
-Last F (2026). *zurds: What the Package Does (One Line, Title Case)*. R
-package version 0.0.0.9000, <https://pedrobtz.github.io/zurds/>.
+Source:
+[`DESCRIPTION`](https://github.com/pedrobtz/zurds/blob/main/DESCRIPTION)
+
+Baltazar P (2026). *zurds: Inspect and Safely Read R Serialization
+Files*. R package version 0.0.0.9000,
+<https://github.com/pedrobtz/zurds>.
 
     @Manual{,
-      title = {zurds: What the Package Does (One Line, Title Case)},
-      author = {First Last},
+      title = {zurds: Inspect and Safely Read R Serialization Files},
+      author = {Pedro Baltazar},
       year = {2026},
       note = {R package version 0.0.0.9000},
-      url = {https://pedrobtz.github.io/zurds/},
+      url = {https://github.com/pedrobtz/zurds},
     }

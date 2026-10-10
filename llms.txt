@@ -1,6 +1,11 @@
 # zurds
 
-The goal of zurds is to …
+zurds inspects and safely reads the files R writes with
+[`saveRDS()`](https://rdrr.io/r/base/readRDS.html),
+[`save()`](https://rdrr.io/r/base/save.html) and
+[`serialize()`](https://rdrr.io/r/base/serialize.html), without handing
+them to R’s deserializer. It is in early development; see the
+[roadmap](https://pedrobtz.github.io/zurds/.agents/roadmap.md).
 
 ## Installation
 
@@ -23,5 +28,12 @@ library(zurds)
 ## basic example code
 ```
 
-# 
+# Package index
+
+## All functions
+
+- [`zurds-conditions`](https://pedrobtz.github.io/zurds/reference/zurds-conditions.md)
+  : Conditions raised by zurds
+- [`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md)
+  : Build information
 
