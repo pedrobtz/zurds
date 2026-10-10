@@ -45,9 +45,12 @@ Other safety:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rds")
-saveRDS(list(sd = stats::sd, x = 1:3), f)
-rds_deps(f)
+rds_deps(system.file("extdata", "model.rds", package = "zurds"))
+#> [1] package reason  detail 
+#> <0 rows> (or 0-length row.names)
+
+# An object from a namespace needs that package:
+rds_deps(serialize(stats::sd, NULL))
 #>   package    reason detail
 #> 1   stats namespace   <NA>
 ```

@@ -75,21 +75,21 @@ Other reading:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rds")
-saveRDS(head(mtcars), f)
+f <- system.file("extdata", "iris.rds", package = "zurds")
 identical(rds_read_data(f), readRDS(f))
 #> [1] TRUE
 
-saveRDS(list(x = 1:3, f = function() "hello"), f)
-try(rds_read_data(f))
-#> Error in rds_read_data(f) : 
-#>   the file holds what the data-only reader refuses: closure, environment, namespace, bytecode, promise. Use rds_scan() to see where, or strict = FALSE to read it with those items replaced by NULL.
-rds_read_data(f, strict = FALSE)
-#> Warning: replaced 1 closure item(s) by NULL
-#> $x
-#> [1] 1 2 3
+# A file holding code is refused, or read with the code dropped:
+promise <- system.file("extdata", "promise.rds", package = "zurds")
+try(rds_read_data(promise))
+#> Error in rds_read_data(promise) : 
+#>   the file holds what the data-only reader refuses: promise. Use rds_scan() to see where, or strict = FALSE to read it with those items replaced by NULL.
+rds_read_data(promise, strict = FALSE)
+#> Warning: replaced 1 promise item(s) by NULL
+#> [[1]]
+#> [1] "harmless"
 #> 
-#> $f
+#> [[2]]
 #> NULL
 #> 
 ```

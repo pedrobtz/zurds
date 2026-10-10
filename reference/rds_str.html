@@ -22,6 +22,7 @@ be summarised."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -93,23 +94,37 @@ code or reach outside the file are named, never followed.</p>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>id <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, fit <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>coef <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fl">1</span>, b <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span>, when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.time.html" class="external-link">Sys.Date</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>, <span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">rds_str</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> List of 3</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ id: int &lt;compact_intseq&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ fit:List of 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ coef: num [1:2]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ when: 'Date' num [1:1]</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">rds_str</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"model.rds"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ data:'data.frame':	6 obs. of  2 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ mpg: num [1:6]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ wt: num [1:6]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ fit:'lm' List of 12</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ coefficients: num [1:2]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ residuals: num [1:32]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ effects: num [1:32]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ rank: int [1:1]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ fitted.values: num [1:32]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ assign: int [1:2]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ qr:'qr' List of 5</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ df.residual: int [1:1]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ xlevels:List of 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ call: language</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ terms: 'terms', 'formula' language</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   ..$ model:'data.frame':	32 obs. of  2 variables:</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rda"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="va">letters</span></span></span>
-<span class="r-in"><span><span class="va">y</span> <span class="op">&lt;-</span> <span class="va">iris</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">y</span>, file <span class="op">=</span> <span class="va">g</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">rds_str</span><span class="op">(</span><span class="va">g</span>, max_level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> .rda with 2 objects:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ x: chr [1:26]</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  $ y:'data.frame':	150 obs. of  5 variables:</span>
+<span class="r-in"><span><span class="fu">rds_str</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"objects.rda"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span>, max_level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> .rda with 4 objects:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ cars:'data.frame':	10 obs. of  11 variables:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ species: Factor w/ 3 levels "setosa","versicolor","virginica": [1:3]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ grid: num [1:6] (matrix)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ summarise: function</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A file R refuses to load can still be summarised:</span></span></span>
+<span class="r-in"><span><span class="fu">rds_str</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"promise.rds"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> List of 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ : chr [1:1]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  $ : promise</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

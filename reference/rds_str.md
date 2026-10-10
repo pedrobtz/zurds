@@ -51,21 +51,35 @@ Other inspection:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rds")
-saveRDS(list(id = 1:3, fit = list(coef = c(a = 1, b = 2)), when = Sys.Date()), f)
-rds_str(f)
-#> List of 3
-#>  $ id: int <compact_intseq>
-#>  $ fit:List of 1
-#>   ..$ coef: num [1:2]
-#>  $ when: 'Date' num [1:1]
+rds_str(system.file("extdata", "model.rds", package = "zurds"))
+#> List of 2
+#>  $ data:'data.frame':    6 obs. of  2 variables:
+#>   ..$ mpg: num [1:6]
+#>   ..$ wt: num [1:6]
+#>  $ fit:'lm' List of 12
+#>   ..$ coefficients: num [1:2]
+#>   ..$ residuals: num [1:32]
+#>   ..$ effects: num [1:32]
+#>   ..$ rank: int [1:1]
+#>   ..$ fitted.values: num [1:32]
+#>   ..$ assign: int [1:2]
+#>   ..$ qr:'qr' List of 5
+#>   ..$ df.residual: int [1:1]
+#>   ..$ xlevels:List of 0
+#>   ..$ call: language
+#>   ..$ terms: 'terms', 'formula' language
+#>   ..$ model:'data.frame':    32 obs. of  2 variables:
 
-g <- tempfile(fileext = ".rda")
-x <- letters
-y <- iris
-save(x, y, file = g)
-rds_str(g, max_level = 1)
-#> .rda with 2 objects:
-#>  $ x: chr [1:26]
-#>  $ y:'data.frame':   150 obs. of  5 variables:
+rds_str(system.file("extdata", "objects.rda", package = "zurds"), max_level = 1)
+#> .rda with 4 objects:
+#>  $ cars:'data.frame':    10 obs. of  11 variables:
+#>  $ species: Factor w/ 3 levels "setosa","versicolor","virginica": [1:3]
+#>  $ grid: num [1:6] (matrix)
+#>  $ summarise: function
+
+# A file R refuses to load can still be summarised:
+rds_str(system.file("extdata", "promise.rds", package = "zurds"))
+#> List of 2
+#>  $ : chr [1:1]
+#>  $ : promise
 ```

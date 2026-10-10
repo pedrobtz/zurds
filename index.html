@@ -32,6 +32,7 @@
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
 <li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
@@ -51,22 +52,49 @@
 </h1></div>
 <!-- badges: start -->
 
-<p>zurds inspects and safely reads the files R writes with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>, <code><a href="https://rdrr.io/r/base/save.html" class="external-link">save()</a></code> and <code><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize()</a></code>, without handing them to R’s deserializer. It is in early development; see the <a href=".agents/roadmap.html">roadmap</a>.</p>
+<p>zurds reads the files R writes with <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS()</a></code>, <code><a href="https://rdrr.io/r/base/save.html" class="external-link">save()</a></code> and <code><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize()</a></code>, and lazy-load databases, without handing them to R’s deserializer. It can tell you what a file holds, pull out one object, check whether a file is safe to load, and read data-only files with a reader that cannot run code.</p>
+<p><code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code> and <code><a href="https://rdrr.io/r/base/load.html" class="external-link">load()</a></code> are all or nothing: to learn what a 2 GB <code>.rda</code> contains, or whether a model file from a colleague carries closures and environments, you have to load all of it, and loading can run code (CVE-2024-27322). zurds walks the file instead, building nothing it was not asked for.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
-<p>You can install the development version of zurds from <a href="https://github.com/" class="external-link">GitHub</a> with:</p>
+<p>zurds is not on CRAN yet. Install it, and the <code>zufast</code> headers it is built with, from GitHub:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># install.packages("pak")</span></span>
 <span><span class="fu">pak</span><span class="fu">::</span><span class="fu"><a href="https://pak.r-lib.org/reference/pak.html" class="external-link">pak</a></span><span class="op">(</span><span class="st">"pedrobtz/zurds"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
-<h2 id="example">Example<a class="anchor" aria-label="anchor" href="#example"></a>
+<h2 id="what-is-in-a-file">What is in a file<a class="anchor" aria-label="anchor" href="#what-is-in-a-file"></a>
 </h2>
-<p>This is a basic example which shows you how to solve a common problem:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/pedrobtz/zurds" class="external-link">zurds</a></span><span class="op">)</span></span>
-<span><span class="co">## basic example code</span></span></code></pre></div>
+<span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"objects.rda"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/rds_toc.html">rds_toc</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span>
+<span><span class="co">#&gt;        name    type      class length     dim size offset risky</span></span>
+<span><span class="co">#&gt; 1      cars    list data.frame     11 10 x 11 1396     48 FALSE</span></span>
+<span><span class="co">#&gt; 2   species integer     factor      3    &lt;NA&gt;  133   1467 FALSE</span></span>
+<span><span class="co">#&gt; 3      grid  double       &lt;NA&gt;      6   2 x 3   95   1620 FALSE</span></span>
+<span><span class="co">#&gt; 4 summarise closure       &lt;NA&gt;      1    &lt;NA&gt;  132   1740  TRUE</span></span></code></pre></div>
+<p><code><a href="reference/rds_str.html">rds_str()</a></code> summarises any file the way <code><a href="https://rdrr.io/r/utils/str.html" class="external-link">str()</a></code> does, and <code><a href="reference/rds_info.html">rds_info()</a></code> reads its header.</p>
+</div>
+<div class="section level2">
+<h2 id="is-it-safe-to-load">Is it safe to load?<a class="anchor" aria-label="anchor" href="#is-it-safe-to-load"></a>
+</h2>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/rds_scan.html">rds_scan</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"promise.rds"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    path finding detail severity</span></span>
+<span><span class="co">#&gt; 1 [[2]] promise   &lt;NA&gt; executes</span></span></code></pre></div>
+<p>A promise, a closure or bytecode can run code; an environment, a namespace or an external pointer reaches outside the file; ALTREP and S4 classes need their packages. <code><a href="reference/rds_scan.html">rds_is_safe()</a></code> is <code>TRUE</code> when the scan finds nothing, and <code><a href="reference/rds_deps.html">rds_deps()</a></code> lists the packages a file would need.</p>
+</div>
+<div class="section level2">
+<h2 id="reading-data-safely">Reading data safely<a class="anchor" aria-label="anchor" href="#reading-data-safely"></a>
+</h2>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"iris.rds"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical</a></span><span class="op">(</span><span class="fu"><a href="reference/rds_read_data.html">rds_read_data</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="va">f</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] TRUE</span></span></code></pre></div>
+<p><code><a href="reference/rds_read_data.html">rds_read_data()</a></code> builds only vectors, lists and their attributes, and refuses everything else. <code><a href="reference/rds_extract.html">rds_extract()</a></code> reads one object, element or column without building the rest, and <code><a href="reference/rds_lazyload_toc.html">rds_lazyload_toc()</a></code> and <code><a href="reference/rds_lazyload_extract.html">rds_lazyload_extract()</a></code> do the same for lazy-load databases.</p>
+<p>See <code><a href="articles/safe-reading.html">vignette("safe-reading", package = "zurds")</a></code> for what the safety guarantee covers and what it does not.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><div class="links">

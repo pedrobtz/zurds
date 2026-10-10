@@ -53,13 +53,15 @@ class below inherits from `zurds_error`.
 ## Examples
 
 ``` r
-tryCatch(
-  stop(structure(
-    class = c("zurds_format_error", "zurds_error", "error", "condition"),
-    list(message = "not an R serialization file", call = NULL)
-  )),
-  zurds_error = function(e) class(e)
-)
-#> [1] "zurds_format_error" "zurds_error"        "error"             
-#> [4] "condition"         
+f <- system.file("extdata", "promise.rds", package = "zurds")
+cnd <- tryCatch(rds_read_data(f), zurds_unsafe_content = function(e) e)
+class(cnd)
+#> [1] "zurds_unsafe_content" "zurds_error"          "error"               
+#> [4] "condition"           
+cnd$findings
+#>    path finding detail severity
+#> 1 [[2]] promise   <NA> executes
+
+tryCatch(rds_info(charToRaw("not R")), zurds_format_error = conditionMessage)
+#> [1] "not an R serialization stream: unknown magic bytes"
 ```

@@ -75,27 +75,25 @@ Other safety:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rds")
-saveRDS(list(data = mtcars, model = lm(mpg ~ wt, mtcars)), f)
-head(rds_scan(f))
-#>                                                         path     finding detail
-#> 1                                   [[2]][[11]]$.Environment environment   <NA>
-#> 2                            [[2]][[11]]$.Environment@enclos environment   <NA>
-#> 3                     [[2]][[11]]$.Environment@enclos@enclos environment   <NA>
-#> 4              [[2]][[11]]$.Environment@enclos@enclos@enclos environment   <NA>
-#> 5     [[2]][[11]]$.Environment@enclos@hashtab[[14]]$DONTSHOW     closure   <NA>
-#> 6 [[2]][[11]]$.Environment@enclos@hashtab[[14]]$DONTSHOW@env environment   <NA>
-#>      severity
-#> 1 reaches_out
-#> 2 reaches_out
-#> 3 reaches_out
-#> 4 reaches_out
-#> 5    executes
-#> 6 reaches_out
-rds_is_safe(f)
-#> [1] FALSE
-
-saveRDS(mtcars, f)
-rds_is_safe(f)
+rds_scan(system.file("extdata", "model.rds", package = "zurds"))
+#>                                                                  path
+#> 1                                            [[2]][[11]]$.Environment
+#> 2       [[2]][[11]]$.Environment@hashtab[[11]]$fit[[11]]$.Environment
+#> 3 [[2]][[11]]$.Environment@hashtab[[11]]$fit[[12]]$terms$.Environment
+#> 4                                      [[2]][[12]]$terms$.Environment
+#>       finding detail    severity
+#> 1 environment   <NA> reaches_out
+#> 2 environment   <NA> reaches_out
+#> 3 environment   <NA> reaches_out
+#> 4 environment   <NA> reaches_out
+rds_is_safe(system.file("extdata", "iris.rds", package = "zurds"))
 #> [1] TRUE
+
+# A promise that would run system() when used:
+promise <- system.file("extdata", "promise.rds", package = "zurds")
+rds_scan(promise)
+#>    path finding detail severity
+#> 1 [[2]] promise   <NA> executes
+rds_is_safe(promise)
+#> [1] FALSE
 ```

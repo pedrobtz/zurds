@@ -20,6 +20,7 @@ object it holds."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -88,8 +89,7 @@ lazy-load database, that of its index.</p></li>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rds"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">saveRDS</a></span><span class="op">(</span><span class="va">mtcars</span>, <span class="va">f</span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"model.rds"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">rds_info</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rds_info&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> kind:               rds</span>
@@ -99,10 +99,20 @@ lazy-load database, that of its index.</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> native encoding:    UTF-8</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> compression:        gzip</span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="fu">rds_info</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="cn">NULL</span>, version <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">rds_info</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"objects.rda"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rds_info&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> kind:               rda</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> format:             xdr, version 3</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> written by R:       4.6.1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> readable from R:    3.5.0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> native encoding:    UTF-8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> compression:        gzip</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A serialize() result, written by R in ASCII format version 2:</span></span></span>
+<span class="r-in"><span><span class="fu">rds_info</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="cn">NULL</span>, ascii <span class="op">=</span> <span class="cn">TRUE</span>, version <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;rds_info&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> kind:               rds</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> format:             xdr, version 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> format:             ascii, version 2</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> written by R:       4.6.1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> readable from R:    2.3.0</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> native encoding:    NA</span>

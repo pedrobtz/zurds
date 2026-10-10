@@ -63,8 +63,7 @@ Other inspection:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rds")
-saveRDS(mtcars, f)
+f <- system.file("extdata", "model.rds", package = "zurds")
 rds_info(f)
 #> <rds_info>
 #> kind:               rds
@@ -74,10 +73,20 @@ rds_info(f)
 #> native encoding:    UTF-8
 #> compression:        gzip
 
-rds_info(serialize(1:3, NULL, version = 2))
+rds_info(system.file("extdata", "objects.rda", package = "zurds"))
+#> <rds_info>
+#> kind:               rda
+#> format:             xdr, version 3
+#> written by R:       4.6.1
+#> readable from R:    3.5.0
+#> native encoding:    UTF-8
+#> compression:        gzip
+
+# A serialize() result, written by R in ASCII format version 2:
+rds_info(serialize(1:3, NULL, ascii = TRUE, version = 2))
 #> <rds_info>
 #> kind:               rds
-#> format:             xdr, version 2
+#> format:             ascii, version 2
 #> written by R:       4.6.1
 #> readable from R:    2.3.0
 #> native encoding:    NA

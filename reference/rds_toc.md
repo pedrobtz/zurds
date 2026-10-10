@@ -61,14 +61,10 @@ Other inspection:
 ## Examples
 
 ``` r
-f <- tempfile(fileext = ".rda")
-x <- 1:10
-cars <- mtcars
-m <- matrix(0, 3, 4)
-save(x, cars, m, file = f)
-rds_toc(f)
-#>   name    type      class length     dim size offset risky
-#> 1    x integer       <NA>     10    <NA>  110     45 FALSE
-#> 2 cars    list data.frame     11 32 x 11 3784    175 FALSE
-#> 3    m  double       <NA>     12   3 x 4  143   3976 FALSE
+rds_toc(system.file("extdata", "objects.rda", package = "zurds"))
+#>        name    type      class length     dim size offset risky
+#> 1      cars    list data.frame     11 10 x 11 1396     48 FALSE
+#> 2   species integer     factor      3    <NA>  133   1467 FALSE
+#> 3      grid  double       <NA>      6   2 x 3   95   1620 FALSE
+#> 4 summarise closure       <NA>      1    <NA>  132   1740  TRUE
 ```

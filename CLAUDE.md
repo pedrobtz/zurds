@@ -25,11 +25,10 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 10, 2026-10-10: the whole v0.1.0 API (design section 5),
-with fuzzing, the hostile inputs, the drift check and the benchmarks.
-The walk reads XDR, native binary and ASCII streams of every item kind R
-writes. Not yet: Stage 11’s documentation and Stage 12. See the
-roadmap’s stage table for what is done.
+Stages 0 to 11, 2026-10-10: the whole v0.1.0 API (design section 5),
+hardened and documented. The walk reads XDR, native binary and ASCII
+streams of every item kind R writes. Not yet: Stage 12 (v0.1.0
+readiness). See the roadmap’s stage table for what is done.
 
 ## Stage tracking
 

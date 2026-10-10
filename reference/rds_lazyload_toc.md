@@ -36,8 +36,16 @@ Other lazy-load:
 ## Examples
 
 ``` r
-db <- file.path(system.file("R", package = "stats"), "stats")
-head(rds_lazyload_toc(db))
+db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+rds_lazyload_toc(db)
+#>       name      type      class length   dim size offset risky
+#> 1   helper   closure       <NA>      1  <NA>   60      0  TRUE
+#> 2 letters2 character       <NA>      5  <NA>   76     61 FALSE
+#> 3    table      list data.frame      2 3 x 2  319    117 FALSE
+
+# An installed package's own database:
+stats <- file.path(system.file("R", package = "stats"), "stats")
+head(rds_lazyload_toc(stats))
 #>                   name        type class length  dim  size offset risky
 #> 1                .Diag     closure  <NA>      1 <NA>  4836      0  TRUE
 #> 2             .MFclass     closure  <NA>      1 <NA>  3503   1121  TRUE

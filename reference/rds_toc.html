@@ -22,6 +22,7 @@ and memory stays small however large the objects are."></head><body>
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -90,16 +91,12 @@ outside the file: a finding of <code><a href="rds_scan.html">rds_scan()</a></cod
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".rda"</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fl">1</span><span class="op">:</span><span class="fl">10</span></span></span>
-<span class="r-in"><span><span class="va">cars</span> <span class="op">&lt;-</span> <span class="va">mtcars</span></span></span>
-<span class="r-in"><span><span class="va">m</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span>, <span class="fl">4</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/save.html" class="external-link">save</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">cars</span>, <span class="va">m</span>, file <span class="op">=</span> <span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">rds_toc</span><span class="op">(</span><span class="va">f</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   name    type      class length     dim size offset risky</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1    x integer       &lt;NA&gt;     10    &lt;NA&gt;  110     45 FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2 cars    list data.frame     11 32 x 11 3784    175 FALSE</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3    m  double       &lt;NA&gt;     12   3 x 4  143   3976 FALSE</span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">rds_toc</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata"</span>, <span class="st">"objects.rda"</span>, package <span class="op">=</span> <span class="st">"zurds"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>        name    type      class length     dim size offset risky</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      cars    list data.frame     11 10 x 11 1396     48 FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2   species integer     factor      3    &lt;NA&gt;  133   1467 FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3      grid  double       &lt;NA&gt;      6   2 x 3   95   1620 FALSE</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4 summarise closure       &lt;NA&gt;      1    &lt;NA&gt;  132   1740  TRUE</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

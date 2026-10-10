@@ -41,3 +41,6 @@
   [`rds_lazyload_extract()`](https://pedrobtz.github.io/zurds/reference/rds_lazyload_extract.md)
   list and read lazy-load databases, such as an installed package’s,
   without forcing promises.
+- [`vignette("safe-reading")`](https://pedrobtz.github.io/zurds/articles/safe-reading.md)
+  explains how to look at, scan and read files from elsewhere, and what
+  the data-only reader does and does not guarantee.

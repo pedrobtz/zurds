@@ -40,9 +40,13 @@ Other lazy-load:
 ## Examples
 
 ``` r
-db <- file.path(system.file("R", package = "stats"), "stats")
-toc <- rds_lazyload_toc(db)
-data_only <- toc$name[!toc$risky & toc$type %in% c("character", "list")]
-if (length(data_only)) str(rds_lazyload_extract(db, data_only[1]))
-#>  chr [1:2] "y" "n"
+db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+rds_lazyload_extract(db, "table")
+#>   id name
+#> 1  1    a
+#> 2  2    b
+#> 3  3    c
+try(rds_lazyload_extract(db, "helper"))
+#> Error in rds_lazyload_extract(db, "helper") : 
+#>   the file holds what the data-only reader refuses: closure. Use rds_scan() to see where, or strict = FALSE to read it with those items replaced by NULL.
 ```

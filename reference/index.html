@@ -16,6 +16,7 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto"><li class="active nav-item"><a class="nav-link" href="../reference/index.html">Reference</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/index.html">Articles</a></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -32,9 +33,9 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="look-inside-a-file">Look inside a file<a class="anchor" aria-label="anchor" href="#look-inside-a-file"></a></h2>
 
-
+      <div class="section-desc"><p>Without building anything it holds.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -43,52 +44,10 @@
 
       <dl><dt>
 
-          <code><a href="rds_deps.html">rds_deps()</a></code>
-
-        </dt>
-        <dd>Packages a file needs</dd>
-
-        <dt>
-
-          <code><a href="rds_extract.html">rds_extract()</a></code>
-
-        </dt>
-        <dd>Extract one object or element from an R serialization file</dd>
-
-        <dt>
-
           <code><a href="rds_info.html">rds_info()</a></code>
 
         </dt>
         <dd>Header of an R serialization file</dd>
-
-        <dt>
-
-          <code><a href="rds_lazyload_extract.html">rds_lazyload_extract()</a></code>
-
-        </dt>
-        <dd>Extract one object from a lazy-load database</dd>
-
-        <dt>
-
-          <code><a href="rds_lazyload_toc.html">rds_lazyload_toc()</a></code>
-
-        </dt>
-        <dd>Table of contents of a lazy-load database</dd>
-
-        <dt>
-
-          <code><a href="rds_read_data.html">rds_read_data()</a></code>
-
-        </dt>
-        <dd>Read a data-only R serialization file safely</dd>
-
-        <dt>
-
-          <code><a href="rds_scan.html">rds_scan()</a></code> <code><a href="rds_scan.html">rds_is_safe()</a></code>
-
-        </dt>
-        <dd>Scan an R serialization file for code and references</dd>
 
         <dt>
 
@@ -103,6 +62,91 @@
 
         </dt>
         <dd>Table of contents of an .rda file</dd>
+      </dl></div><div class="section level2">
+      <h2 id="is-it-safe-">Is it safe?<a class="anchor" aria-label="anchor" href="#is-it-safe-"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rds_scan.html">rds_scan()</a></code> <code><a href="rds_scan.html">rds_is_safe()</a></code>
+
+        </dt>
+        <dd>Scan an R serialization file for code and references</dd>
+
+        <dt>
+
+          <code><a href="rds_deps.html">rds_deps()</a></code>
+
+        </dt>
+        <dd>Packages a file needs</dd>
+      </dl></div><div class="section level2">
+      <h2 id="read-data">Read data<a class="anchor" aria-label="anchor" href="#read-data"></a></h2>
+
+      <div class="section-desc"><p>With a reader that builds only data and never runs code.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rds_read_data.html">rds_read_data()</a></code>
+
+        </dt>
+        <dd>Read a data-only R serialization file safely</dd>
+
+        <dt>
+
+          <code><a href="rds_extract.html">rds_extract()</a></code>
+
+        </dt>
+        <dd>Extract one object or element from an R serialization file</dd>
+      </dl></div><div class="section level2">
+      <h2 id="lazy-load-databases">Lazy-load databases<a class="anchor" aria-label="anchor" href="#lazy-load-databases"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="rds_lazyload_toc.html">rds_lazyload_toc()</a></code>
+
+        </dt>
+        <dd>Table of contents of a lazy-load database</dd>
+
+        <dt>
+
+          <code><a href="rds_lazyload_extract.html">rds_lazyload_extract()</a></code>
+
+        </dt>
+        <dd>Extract one object from a lazy-load database</dd>
+      </dl></div><div class="section level2">
+      <h2 id="the-package">The package<a class="anchor" aria-label="anchor" href="#the-package"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="zurds_info.html">zurds_info()</a></code>
+
+        </dt>
+        <dd>Build information</dd>
 
         <dt>
 
@@ -113,12 +157,13 @@
 
         <dt>
 
-          <code><a href="zurds_info.html">zurds_info()</a></code>
+          <code><a href="zurds-package.html">zurds</a></code> <code><a href="zurds-package.html">zurds-package</a></code>
 
         </dt>
-        <dd>Build information</dd>
+        <dd>zurds: Inspect and Safely Read R Serialization Files</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">
