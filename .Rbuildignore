@@ -4,3 +4,9 @@
 ^docs$
 ^pkgdown$
 ^\.agents$
+^tools$
+^CLAUDE\.md$
+^AGENTS\.md$
+\.o$
+\.so$
+\.dll$

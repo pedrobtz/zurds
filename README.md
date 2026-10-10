@@ -6,7 +6,7 @@
 [![coverage](https://raw.githubusercontent.com/pedrobtz/zurds/main/.github/badges/coverage.svg)](https://github.com/pedrobtz/zurds/actions/workflows/coverage.yaml)
 <!-- badges: end -->
 
-The goal of zurds is to ...
+zurds inspects and safely reads the files R writes with `saveRDS()`, `save()` and `serialize()`, without handing them to R's deserializer. It is in early development; see the [roadmap](.agents/roadmap.md).
 
 ## Installation
 

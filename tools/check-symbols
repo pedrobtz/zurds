@@ -1,0 +1,61 @@
+#!/bin/sh
+# Fail if the built shared object exports anything but R_init_zurds (design
+# section 13, family rule R3), or references symbols R CMD check objects to:
+# output to the console (stdout, stderr, printf, puts, putchar) or ending the
+# process (abort, exit, _exit, and assert(), which reaches them). Run it on an
+# R CMD INSTALL build: devtools::load_all() compiles with -UNDEBUG, which
+# keeps assert()s in.
+#
+# Usage: tools/check-symbols [path/to/zurds.so]   (default: src/zurds.so)
+#        tools/check-symbols --canary             (must fail; see below)
+set -eu
+
+if [ "${1:-}" = "--canary" ]; then
+  # Builds a shared object that breaks both rules on purpose, and fails
+  # unless this script rejects it: the gate is trusted only once it has
+  # been seen to fail (roadmap, rules for every stage).
+  dir=$(mktemp -d)
+  trap 'rm -rf "$dir"' EXIT
+  cat > "$dir/canary.c" <<'EOF'
+#include <stdio.h>
+#include <stdlib.h>
+void R_init_zurds(void) {}
+void zrd_leaked(void) { printf("x"); abort(); }
+EOF
+  ${CC:-cc} -shared -fPIC -o "$dir/canary.so" "$dir/canary.c"
+  if "$0" "$dir/canary.so"; then
+    echo "FAIL: the canary passed; the gate checks nothing" >&2
+    exit 1
+  fi
+  echo "==> canary rejected, as it must be"
+  exit 0
+fi
+
+SO="${1:-src/zurds.so}"
+[ -f "$SO" ] || { echo "no shared object at $SO; build the package first" >&2; exit 2; }
+
+# Leading underscores differ by platform (_printf on macOS), and __stdoutp /
+# __stderrp are macOS's names for stdout / stderr. Streams are listed as well
+# as functions: clang rewrites fprintf(stderr, ...) into fwrite, so the
+# stream is what gives it away.
+BAD='^_*(stdout|stderr|stdoutp|stderrp|printf|vprintf|puts|putchar|fputs|fprintf|vfprintf|abort|exit|_exit|_Exit|assert|assert_fail|assert_rtn)$'
+
+fail=0
+found=$(nm -u "$SO" | awk '{print $NF}' | grep -E "$BAD" || true)
+if [ -n "$found" ]; then
+  echo "FAIL: $SO references symbols R CMD check reports:" >&2
+  echo "$found" | sed 's/^/  /' >&2
+  fail=1
+fi
+
+# Defined, external text symbols: only the init function may be visible.
+exported=$(nm -g "$SO" 2>/dev/null | awk '$2 == "T" {print $3}' \
+  | sed 's/^_//' | grep -v '^R_init_zurds$' || true)
+if [ -n "$exported" ]; then
+  echo "FAIL: $SO exports symbols other than R_init_zurds:" >&2
+  echo "$exported" | sed 's/^/  /' >&2
+  fail=1
+fi
+
+[ $fail = 0 ] || exit 1
+echo "==> $SO: exports only R_init_zurds; no console-output or process-exit symbols"

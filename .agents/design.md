@@ -1,8 +1,7 @@
 # RFC 0015: `zurds`, inspecting and safely reading R serialization files
 
-- **Status:** Proposed. Merging this file adopts the design as the starting
-  point for the package's own `.agents/design.md`; each decision in section
-  16 stays the maintainer's until the package repository records it.
+- **Status:** Adopted 2026-10-10 (roadmap Stage 0). Proposed as RFC 0015
+  on 2026-10-09.
 - **Date:** 2026-10-09.
 - **Packages:** `zurds` (not yet created; name chosen 2026-10-09 over
   `zurd`, which reads as R's `.Rd` documentation format, and `zurda`,
@@ -102,7 +101,17 @@ The one-line statement that governs every decision below:
 | Language | en-GB (R2) |
 
 The `zrd_` prefix is unused in this repository's documents on
-2026-10-09; Stage 0 checks it against every sibling's source.
+2026-10-09. **Checked 2026-10-10 (Stage 0):** no sibling uses `zrd_` or
+`ZRD_` in its C sources or installed headers:
+
+```sh
+grep -rlE '\b(zrd_|ZRD_)' --include='*.[ch]' --include='*.cpp' \
+  --include='*.hpp' ../*/src ../*/inst/include | grep -v '^../zurds/'
+gh search code "zrd_" --owner pedrobtz
+```
+
+The first found nothing across the 26 local `zu*` siblings; the second
+found only RFC 0015 itself in `pedrobtz/packages`.
 
 **Relationships, as decided rather than as hoped:**
 
@@ -138,8 +147,13 @@ files who need one object from them.
 - `librdata` (WizardMac, C) and Python's `rdata` and `pyreadr`: readers of
   data frames and vectors in RDS/RData for other languages; no scanner,
   no lazy-load support.
-- Nothing on CRAN inspects or scans these files without loading them
-  (to be re-checked in Stage 0).
+- Nothing on CRAN inspects or scans these files without loading them.
+  **Re-checked 2026-10-10 (Stage 0):** of 25,396 CRAN packages,
+  `tools::CRAN_package_db()` titles and descriptions matching `RDS`,
+  `.rds`, `RData`, `.rda` or `serializ` gave 91 hits. They are alternative
+  serializers (`qs2`, `fst`, `RApiSerialize`, `cereal`), data packages,
+  and `RDS` (respondent-driven sampling); none inspects or scans R
+  serialization files without loading them.
 
 ## 4. Architecture
 

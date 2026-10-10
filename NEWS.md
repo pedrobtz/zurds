@@ -1,3 +1,4 @@
-# zurds (development version)
+# zurds 0.0.0.9000
 
-* Initial CRAN submission.
+* `zurds_info()` reports the package and `zufast` versions, the default
+  limits, and the compressions this R can read.
