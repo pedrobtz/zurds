@@ -37,7 +37,7 @@ Rules that hold for every stage:
 | 8 | Extraction | M | #10 | 2026-10-10 | [#25](https://github.com/pedrobtz/zurds/pull/25) |
 | 9 | Lazy-load databases | M | #11 | 2026-10-10 | [#26](https://github.com/pedrobtz/zurds/pull/26) |
 | 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | 2026-10-10 | [#27](https://github.com/pedrobtz/zurds/pull/27) |
-| 11 | Documentation | S | #13 | | |
+| 11 | Documentation | S | #13 | 2026-10-10 | |
 | 12 | v0.1.0 readiness | S | #14 | | |
 
 ## Stage 0 — Package identity
