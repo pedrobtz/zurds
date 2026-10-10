@@ -76,24 +76,24 @@ test_that("a truncated gzip file is a decompression error", {
 })
 
 test_that("pairlist values are named by their tags", {
-  x <- serialize(pairlist(a = 1, b = list(2, 3)), NULL)
-  hits <- which(sapply(seq_len(length(x) - 3), function(i)
-    identical(x[i:(i + 3)], as.raw(c(0, 0, 0, 14)))))
-  x[hits[3] + 3] <- as.raw(30)
+  # pairlist(a = 1, b = list(2, <bad>)), built by hand: cells with tags
+  # (flags 2 + 1024), symbols (1) with their names (9), values, then an
+  # unknown type 30 where the list's second element should be.
+  dbl <- function(x) writeBin(x, raw(), endian = "big")
+  x <- xdr_stream(
+    1026, 1, 9, 1, charToRaw("a"), 14, 1, dbl(1),
+    1026, 1, 9, 1, charToRaw("b"), 19, 2, 14, 1, dbl(2), 30
+  )
   cnd <- expect_error(zrd_walk_info(x), class = "zurds_parse_error")
   expect_identical(cnd$path, "$b[[2]]")
 })
 
 test_that("errors name the path of the item at fault", {
-  # list(a = 1, b = list(2, <bad>)): the bad item is [[2]][[2]]. Elements
-  # are named by position: a list's names follow its elements.
-  x <- serialize(list(a = 1, b = list(2, 3)), NULL)
-  y <- x
-  # Corrupt the flags of the last REALSXP, 3, into an unknown type.
-  hits <- which(sapply(seq_len(length(y) - 3), function(i)
-    identical(y[i:(i + 3)], as.raw(c(0, 0, 0, 14)))))
-  y[hits[3] + 3] <- as.raw(30)
-  cnd <- expect_error(zrd_walk_info(y), class = "zurds_parse_error")
+  # list(1, list(2, <bad>)) by hand. Elements are named by position: a
+  # list's names follow its elements.
+  dbl <- function(x) writeBin(x, raw(), endian = "big")
+  x <- xdr_stream(19, 2, 14, 1, dbl(1), 19, 2, 14, 1, dbl(2), 30)
+  cnd <- expect_error(zrd_walk_info(x), class = "zurds_parse_error")
   expect_identical(cnd$path, "[[2]][[2]]")
 })
 
