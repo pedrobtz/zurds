@@ -47,6 +47,7 @@ rds_str(g, max_level = 1)
 }
 \seealso{
 Other inspection:
-\code{\link[=rds_info]{rds_info()}}
+\code{\link[=rds_info]{rds_info()}},
+\code{\link[=rds_toc]{rds_toc()}}
 }
 \concept{inspection}

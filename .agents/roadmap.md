@@ -31,7 +31,7 @@ Rules that hold for every stage:
 | 2 | The walk: data items in XDR | L | #4 | 2026-10-10 | [#19](https://github.com/pedrobtz/zurds/pull/19) |
 | 3 | The walk: code, environments and ALTREP | M | #5 | 2026-10-10 | [#20](https://github.com/pedrobtz/zurds/pull/20) |
 | 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 | 2026-10-10 | [#21](https://github.com/pedrobtz/zurds/pull/21) |
-| 5 | Table of contents for .rda files | M | #7 | | |
+| 5 | Table of contents for .rda files | M | #7 | 2026-10-10 | [#22](https://github.com/pedrobtz/zurds/pull/22) |
 | 6 | The scanner and rds_deps() | M | #8 | | |
 | 7 | The data-only builder and rds_read_data() | M | #9 | | |
 | 8 | Extraction | M | #10 | | |
@@ -428,8 +428,8 @@ guarantee does and does not cover, from the package itself.
   recommended (opt-in, after a per-item scan). Blocks Stage 8.
 - **Mixed-type list columns in strict mode** (§17 Q2): planned as
   recommended (build as lists). Blocks Stage 7.
-- **`RDX2` / format version 2 in 0.1.0** (§17 Q3): planned as
-  recommended (yes). Affects the fixture matrix in Stage 1 and Stage 5.
+- **`RDX2` / format version 2 in 0.1.0** (§17 Q3): settled 2026-10-10 in
+  Stage 5: yes.
 - **`zufast` on CRAN.** It is at 0.1.0 on GitHub, not on CRAN
   (2026-10-10). Nothing before Stage 12 waits on it; Stage 12 does.
 - **`R_ReadConnection()` on CRAN** (§13): settled 2026-10-10 by Stage 1's

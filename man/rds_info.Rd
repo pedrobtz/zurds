@@ -46,6 +46,7 @@ rds_info(serialize(1:3, NULL, version = 2))
 }
 \seealso{
 Other inspection:
-\code{\link[=rds_str]{rds_str()}}
+\code{\link[=rds_str]{rds_str()}},
+\code{\link[=rds_toc]{rds_toc()}}
 }
 \concept{inspection}

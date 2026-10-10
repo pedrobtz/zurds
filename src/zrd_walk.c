@@ -5,6 +5,7 @@
  * frame); otherwise it ends the item (popping it). A pairlist's next cell
  * reuses its frame, as ReadItem_Iterative() reuses its loop, so a long
  * pairlist does not deepen the stack. */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +57,10 @@ struct zrd_frame {
     int64_t reps;          /* BCODESXP: ReadBC's reps vector length */
     int bcl_attr;          /* FK_BCLANG: an ATTRLANGSXP or ATTRLISTSXP */
     int ref_symbol;        /* a REFSXP to a symbol, named name_off/len */
+    int32_t ints[ZRD_INT_CAP]; /* a short INTSXP or LGLSXP's values */
+    int nints;
+    double reals[ZRD_INT_CAP]; /* a short REALSXP's values */
+    int nreals;
     const char *lead;      /* a continued pairlist: "@body" after a
                               closure's cell, "@code" after a promise's */
 };
@@ -159,6 +164,37 @@ static zrd_status in_int(zrd_walk *w, int32_t *out)
     uint32_t u = w->header.format == ZRD_FORMAT_BINARY && !w->big_endian
         ? zuf_load_le32(b) : zuf_load_be32(b);
     *out = from_u32(u);
+    return ZRD_OK;
+}
+
+/* serialize.c, InReal: eight big-endian bytes (XDR), eight bytes in the
+ * writer's order (binary), or a word: "NA", "NaN", "Inf", "-Inf", or a
+ * decimal or (ascii = NA) hexadecimal number. Only the walk's short double
+ * capture reads doubles; everything else skips them. */
+static zrd_status in_real(zrd_walk *w, double *out)
+{
+    if (w->header.format == ZRD_FORMAT_ASCII) {
+        char word[128];
+        size_t n;
+        zrd_status st = in_word(w, word, sizeof word, &n);
+        if (st) return st;
+        if (strcmp(word, "NA") == 0 || strcmp(word, "NaN") == 0) {
+            *out = NAN; /* NA and NaN alike here */
+            return ZRD_OK;
+        }
+        if (strcmp(word, "Inf") == 0) { *out = HUGE_VAL; return ZRD_OK; }
+        if (strcmp(word, "-Inf") == 0) { *out = -HUGE_VAL; return ZRD_OK; }
+        char *end;
+        *out = strtod(word, &end);
+        if (end != word + n) return fail(w, ZRD_ERR_PARSE, "a double is not a number");
+        return ZRD_OK;
+    }
+    uint8_t b[8];
+    if (zrd_reader_read(w->in, b, 8) != 8)
+        return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a double");
+    uint64_t u = w->header.format == ZRD_FORMAT_BINARY && !w->big_endian
+        ? zuf_load_le64(b) : zuf_load_be64(b);
+    memcpy(out, &u, sizeof *out);
     return ZRD_OK;
 }
 
@@ -383,6 +419,14 @@ static zrd_status emit_at(zrd_walk *w, zrd_event_kind kind, const zrd_frame *f,
     ev.index = f->index;
     ev.ref = ref;
     ev.ref_type = ref_type;
+    if (kind == ZRD_EVENT_END && f->nints > 0) {
+        ev.ints = f->ints;
+        ev.nints = f->nints;
+    }
+    if (kind == ZRD_EVENT_END && f->nreals > 0) {
+        ev.reals = f->reals;
+        ev.nreals = f->nreals;
+    }
     if (kind == ZRD_EVENT_END && f->type == ZRD_REFSXP && f->ref_symbol) {
         ev.data = w->arena + f->name_off;
         ev.data_len = f->name_len;
@@ -546,7 +590,18 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
         f->length = len;
         if ((st = check_size(w, min_vector_bytes(w, f->type, len)))) return st;
         if ((st = emit(w, ZRD_EVENT_BEGIN, f, w->depth - 1, parent, 0, 0))) return st;
-        if ((st = skip_vector(w, f->type, len))) return st;
+        if (w->capture_ints && (f->type == ZRD_INTSXP || f->type == ZRD_LGLSXP) &&
+            len <= ZRD_INT_CAP) {
+            for (int64_t i = 0; i < len; i++)
+                if ((st = in_int(w, &f->ints[i]))) return st;
+            f->nints = (int) len;
+        } else if (w->capture_ints && f->type == ZRD_REALSXP && len <= ZRD_INT_CAP) {
+            for (int64_t i = 0; i < len; i++)
+                if ((st = in_real(w, &f->reals[i]))) return st;
+            f->nreals = (int) len;
+        } else if ((st = skip_vector(w, f->type, len))) {
+            return st;
+        }
         f->phase = ZRD_HAS_ATTR(flags) ? PH_ATTR : PH_DONE;
         return ZRD_OK;
     }

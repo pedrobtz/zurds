@@ -1,18 +1,3 @@
-# rds_str() lists the objects of an .rda
-
-    Code
-      rds_str(test_path("fixtures", "multi-xdr-v3-gzip.rda"))
-    Output
-      .rda with 4 objects:
-       $ integer: int [1:4]
-       $ character: chr [1:5]
-       $ data_frame:'data.frame':	3 obs. of  2 variables:
-        ..$ n: int [1:3]
-        ..$ s: chr [1:3]
-       $ named_list:List of 2
-        ..$ x: num [1:1]
-        ..$ y:List of 1
-
 # rds_str() summarises without building
 
     Code
@@ -55,6 +40,21 @@
       rds_str(f, max_level = 0)
     Output
       List of 9
+
+# rds_str() lists the objects of an .rda
+
+    Code
+      rds_str(test_path("fixtures", "multi-xdr-v3-gzip.rda"))
+    Output
+      .rda with 4 objects:
+       $ integer: int [1:4]
+       $ character: chr [1:5]
+       $ data_frame:'data.frame':	3 obs. of  2 variables:
+        ..$ n: int [1:3]
+        ..$ s: chr [1:3]
+       $ named_list:List of 2
+        ..$ x: num [1:1]
+        ..$ y:List of 1
 
 # rds_str() names every kind of item
 
