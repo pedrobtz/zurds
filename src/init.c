@@ -12,6 +12,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"zrd_walk_trace",    (DL_FUNC) &zrd_walk_trace,    5},
     {"zrd_walk_head",     (DL_FUNC) &zrd_walk_head,     2},
     {"zrd_toc_walk",      (DL_FUNC) &zrd_toc_walk,      3},
+    {"zrd_scan_walk",     (DL_FUNC) &zrd_scan_walk,     3},
     {NULL, NULL, 0}
 };
 

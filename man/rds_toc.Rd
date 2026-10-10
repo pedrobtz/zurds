@@ -27,7 +27,8 @@ by columns; \code{NA} otherwise.
 \item \code{size}: the bytes it takes in the decompressed stream.
 \item \code{offset}: where it starts in the decompressed file, in bytes.
 \item \code{risky}: whether it holds anything that can run code or reach
-outside the file. \code{NA} until the scanner is implemented.
+outside the file: a finding of \code{\link[=rds_scan]{rds_scan()}} of severity
+\code{"executes"} or \code{"reaches_out"}.
 }
 }
 \description{
