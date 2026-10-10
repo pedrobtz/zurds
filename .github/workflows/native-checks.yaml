@@ -34,9 +34,13 @@ jobs:
   lto:
     uses: pedrobtz/r-actions/.github/workflows/lto.yml@v1
 
+  # Step 100 rather than 20: the suite walks every fixture in every format,
+  # and at 20 the full run took over an hour at Stage 2 (r-actions docs:
+  # raise step before the timeout). Every path still runs.
   gctorture:
     uses: pedrobtz/r-actions/.github/workflows/gctorture.yml@v1
     with:
+      step: 100
       profile: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-ci') && 'quick' || 'full' }}
 
   # zufast is LinkingTo-only and not on CRAN, which is all the rchk image
