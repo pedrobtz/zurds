@@ -427,12 +427,12 @@ SEXP zrd_extract_patch(SEXP src, SEXP skip, SEXP limits, SEXP target)
     SET_VECTOR_ELT(out, 10, Rf_ScalarReal((double) p->header_end));
     SET_VECTOR_ELT(out, 11, Rf_ScalarReal((double) p->item_begin));
     SET_VECTOR_ELT(out, 12, Rf_ScalarReal((double) p->item_end));
+    /* Each vector goes into `out`, which is protected, as it is made. */
     R_xlen_t n = (R_xlen_t) p->npatches;
-    SEXP po = Rf_allocVector(REALSXP, n), pl = Rf_allocVector(REALSXP, n);
-    SET_VECTOR_ELT(out, 13, po);
-    SET_VECTOR_ELT(out, 14, pl);
-    SEXP pb = Rf_allocVector(VECSXP, n);
-    SET_VECTOR_ELT(out, 15, pb);
+    SET_VECTOR_ELT(out, 13, Rf_allocVector(REALSXP, n));
+    SET_VECTOR_ELT(out, 14, Rf_allocVector(REALSXP, n));
+    SET_VECTOR_ELT(out, 15, Rf_allocVector(VECSXP, n));
+    SEXP po = VECTOR_ELT(out, 13), pl = VECTOR_ELT(out, 14), pb = VECTOR_ELT(out, 15);
     for (R_xlen_t i = 0; i < n; i++) {
         REAL(po)[i] = (double) p->patches[i].offset;
         REAL(pl)[i] = (double) p->patches[i].len;
