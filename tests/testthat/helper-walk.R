@@ -76,3 +76,10 @@ sxp <- c(
   EXTPTRSXP = 22, WEAKREFSXP = 23, OBJSXP = 25, ALTREP_SXP = 238,
   PERSISTSXP = 247, PACKAGESXP = 248, NAMESPACESXP = 249, REFSXP = 255
 )
+
+# The event sequence of a stream, offsets and strings aside: the same in
+# every format.
+event_shape <- function(path) {
+  ev <- zrd_trace(path, max_depth = 512L)$events
+  ev[c("kind", "type", "depth", "role", "index", "length", "name")]
+}

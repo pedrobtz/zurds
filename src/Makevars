@@ -11,5 +11,6 @@ OBJECTS = \
 	zrd_info.o \
 	zrd_reader.o \
 	zrd_source.o \
+	zrd_trace.o \
 	zrd_walk.o \
 	zrd_walk_r.o

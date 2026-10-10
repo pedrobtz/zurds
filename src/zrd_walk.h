@@ -117,6 +117,10 @@ typedef struct zrd_event {
     size_t name_len;
     int64_t ref;          /* REFSXP: the 1-based index it refers to */
     int ref_type;         /* REFSXP: what that entry is (SYMSXP, ENVSXP, ...) */
+    const char *data;     /* CHARSXP END, when strings are captured: the */
+    size_t data_len;      /* string's first bytes, not 0-terminated, and */
+    int data_complete;    /* whether that is all of it. REFSXP END to a
+                             symbol: the symbol's name, always. */
 } zrd_event;
 
 /* Return non-zero to stop the walk with ZRD_STOPPED. */
@@ -150,6 +154,15 @@ typedef struct zrd_walk {
     char *arena;          /* symbol names */
     size_t arena_len, arena_cap;
 
+    int big_endian;       /* the binary format: the writer's byte order */
+
+    /* Strings delivered with CHARSXP END events, when string_cap > 0: the
+     * first string_cap bytes of each, decoded. */
+    size_t string_cap;
+    char *string_buf;
+    size_t string_len;    /* bytes in string_buf for the current string */
+    int string_complete;  /* the whole string fitted */
+
     double items;         /* items begun */
     uint64_t item_offset; /* where the item being begun starts */
     uint64_t base;        /* reader offset where the stream began */
@@ -167,6 +180,9 @@ zrd_status zrd_walk_init(zrd_walk *w, zrd_reader *in, const zrd_limits *lim,
                          zrd_event_fn on_event, void *event_ctx,
                          zrd_tick_fn tick, void *tick_ctx);
 void zrd_walk_free(zrd_walk *w);
+/* Asks for the first `cap` bytes of every string with its END event. Call
+ * after zrd_walk_init(); returns ZRD_ERR_NOMEM on failure. */
+zrd_status zrd_walk_capture_strings(zrd_walk *w, size_t cap);
 
 /* Reads the stream header (serialize.c, R_Unserialize up to ReadItem). */
 zrd_status zrd_walk_header(zrd_walk *w);
