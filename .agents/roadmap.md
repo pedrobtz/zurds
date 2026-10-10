@@ -24,21 +24,21 @@ Rules that hold for every stage:
 
 ## Stages
 
-| Stage | Title | Size | Issue |
-| --- | --- | --- | --- |
-| 0 | Package identity | S | #2 |
-| 1 | Source and fixtures | M | #3 |
-| 2 | The walk: data items in XDR | L | #4 |
-| 3 | The walk: code, environments and ALTREP | M | #5 |
-| 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 |
-| 5 | Table of contents for .rda files | M | #7 |
-| 6 | The scanner and rds_deps() | M | #8 |
-| 7 | The data-only builder and rds_read_data() | M | #9 |
-| 8 | Extraction | M | #10 |
-| 9 | Lazy-load databases | M | #11 |
-| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 |
-| 11 | Documentation | S | #13 |
-| 12 | v0.1.0 readiness | S | #14 |
+| Stage | Title | Size | Issue | Done | Pull request |
+| --- | --- | --- | --- | --- | --- |
+| 0 | Package identity | S | #2 | 2026-10-10 | |
+| 1 | Source and fixtures | M | #3 | | |
+| 2 | The walk: data items in XDR | L | #4 | | |
+| 3 | The walk: code, environments and ALTREP | M | #5 | | |
+| 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 | | |
+| 5 | Table of contents for .rda files | M | #7 | | |
+| 6 | The scanner and rds_deps() | M | #8 | | |
+| 7 | The data-only builder and rds_read_data() | M | #9 | | |
+| 8 | Extraction | M | #10 | | |
+| 9 | Lazy-load databases | M | #11 | | |
+| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | | |
+| 11 | Documentation | S | #13 | | |
+| 12 | v0.1.0 readiness | S | #14 | | |
 
 ## Stage 0 — Package identity
 
@@ -60,6 +60,9 @@ and exercised, and the questions §3 leaves to this stage answered.
   patterns.
 - `NEWS.md`: `# zurds (development version)`, without the template's
   "Initial CRAN submission" line until Stage 12.
+  *Deviation 2026-10-10:* the heading is `# zurds 0.0.0.9000`. R 4.6's
+  `NEWS.md` parser reads no version from "(development version)" and
+  `R CMD check` notes "No news entries found".
 - Replace `src/zurds.c` with `src/init.c`: `R_init_zurds` registering
   routines, `R_useDynamicSymbols(FALSE)`, `R_forceSymbols(TRUE)`;
   `src/Makevars` with `PKG_CFLAGS = $(C_VISIBILITY)`.
