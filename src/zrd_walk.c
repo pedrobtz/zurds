@@ -254,6 +254,100 @@ static zrd_status skip_vector(zrd_walk *w, int type, int64_t len)
     return ZRD_OK;
 }
 
+static int host_big_endian(void)
+{
+    const uint16_t one = 1;
+    uint8_t b;
+    memcpy(&b, &one, 1);
+    return b == 0;
+}
+
+static int hex_digit(int c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+    return -1;
+}
+
+/* serialize.c, InReal for the ASCII format, keeping NA apart from NaN. */
+static zrd_status in_real_exact(zrd_walk *w, double *out)
+{
+    if (w->header.format != ZRD_FORMAT_ASCII) return in_real(w, out);
+    char word[128];
+    size_t n;
+    zrd_status st = in_word(w, word, sizeof word, &n);
+    if (st) return st;
+    if (strcmp(word, "NA") == 0) {
+        uint64_t na = ZRD_NA_REAL_BITS;
+        memcpy(out, &na, sizeof *out);
+        return ZRD_OK;
+    }
+    if (strcmp(word, "NaN") == 0) { *out = NAN; return ZRD_OK; }
+    if (strcmp(word, "Inf") == 0) { *out = HUGE_VAL; return ZRD_OK; }
+    if (strcmp(word, "-Inf") == 0) { *out = -HUGE_VAL; return ZRD_OK; }
+    char *end;
+    *out = strtod(word, &end);
+    if (end != word + n) return fail(w, ZRD_ERR_PARSE, "a double is not a number");
+    return ZRD_OK;
+}
+
+/* Decodes the payload of an atomic vector into `dst` (see zrd_payload_fn):
+ * serialize.c, InIntegerVec, InRealVec, InComplexVec and the RAWSXP case. */
+static zrd_status read_vector(zrd_walk *w, int type, int64_t len, void *dst)
+{
+    zrd_status st;
+    if (w->header.format == ZRD_FORMAT_ASCII) {
+        int32_t *ints = dst;
+        double *dbls = dst;
+        uint8_t *raw = dst;
+        int64_t n = type == ZRD_CPLXSXP ? 2 * len : len;
+        for (int64_t i = 0; i < n; i++) {
+            if (type == ZRD_LGLSXP || type == ZRD_INTSXP) {
+                if ((st = in_int(w, &ints[i]))) return st;
+            } else if (type == ZRD_RAWSXP) {
+                /* "%2x": one or two hexadecimal digits. */
+                char word[128];
+                size_t wn;
+                if ((st = in_word(w, word, sizeof word, &wn))) return st;
+                int hi = hex_digit((unsigned char) word[0]);
+                int lo = wn > 1 ? hex_digit((unsigned char) word[1]) : 0;
+                if (hi < 0 || lo < 0 || wn > 2)
+                    return fail(w, ZRD_ERR_PARSE, "a raw byte is not hexadecimal");
+                raw[i] = (uint8_t) (wn > 1 ? hi * 16 + lo : hi);
+            } else if ((st = in_real_exact(w, &dbls[i]))) {
+                return st;
+            }
+            if (w->tick && i % TICK_EVERY == TICK_EVERY - 1) w->tick(w->tick_ctx);
+        }
+        return ZRD_OK;
+    }
+    uint64_t size = elt_size(type);
+    uint8_t *p = dst;
+    uint64_t total = (uint64_t) len * size, done = 0;
+    while (done < total) {
+        size_t take = total - done > SKIP_CHUNK ? SKIP_CHUNK : (size_t) (total - done);
+        if (zrd_reader_read(w->in, p + done, take) != take)
+            return fail(w, ZRD_ERR_TRUNCATED, "the stream ends inside a vector");
+        done += take;
+        if (done < total && w->tick) w->tick(w->tick_ctx);
+    }
+    /* XDR is big-endian; binary is in the writer's order. */
+    int stream_big = w->header.format == ZRD_FORMAT_XDR || w->big_endian;
+    if (type == ZRD_RAWSXP || stream_big == host_big_endian()) return ZRD_OK;
+    /* The stream's order is not the host's: reverse each element's bytes
+     * (a complex number is two doubles). */
+    size_t width = size == 4 ? 4 : 8;
+    for (uint64_t i = 0; i < total; i += width) {
+        for (size_t a = 0, b = width - 1; a < b; a++, b--) {
+            uint8_t t = p[i + a];
+            p[i + a] = p[i + b];
+            p[i + b] = t;
+        }
+    }
+    return ZRD_OK;
+}
+
 /* Puts a decoded byte of the current string. */
 static void put_char(zrd_walk *w, char *dst, size_t dst_len, size_t i, char c)
 {
@@ -576,8 +670,23 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
             parent->has_name = 1;
             parent->name_off = off;
             parent->name_len = (size_t) len;
-        } else if ((st = in_string(w, len > 0 ? len : 0, NULL, 0))) {
-            return st;
+        } else {
+            char *dst = NULL;
+            if (w->payload && len > 0) {
+                zrd_event pev;
+                memset(&pev, 0, sizeof pev);
+                pev.kind = ZRD_EVENT_BEGIN;
+                pev.type = f->type;
+                pev.flags = f->flags;
+                pev.length = len;
+                pev.offset = f->offset;
+                pev.depth = w->depth - 1;
+                pev.role = f->role;
+                pev.index = f->index;
+                dst = w->payload(w->payload_ctx, &pev);
+            }
+            if ((st = in_string(w, len > 0 ? len : 0, dst, dst ? (size_t) len : 0)))
+                return st;
         }
         f->phase = ZRD_HAS_ATTR(flags) ? PH_ATTR : PH_DONE;
         return ZRD_OK;
@@ -590,7 +699,23 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
         f->length = len;
         if ((st = check_size(w, min_vector_bytes(w, f->type, len)))) return st;
         if ((st = emit(w, ZRD_EVENT_BEGIN, f, w->depth - 1, parent, 0, 0))) return st;
-        if (w->capture_ints && (f->type == ZRD_INTSXP || f->type == ZRD_LGLSXP) &&
+        void *dst = NULL;
+        if (w->payload) {
+            zrd_event pev;
+            memset(&pev, 0, sizeof pev);
+            pev.kind = ZRD_EVENT_BEGIN;
+            pev.type = f->type;
+            pev.flags = f->flags;
+            pev.length = len;
+            pev.offset = f->offset;
+            pev.depth = w->depth - 1;
+            pev.role = f->role;
+            pev.index = f->index;
+            dst = w->payload(w->payload_ctx, &pev);
+        }
+        if (dst) {
+            if ((st = read_vector(w, f->type, len, dst))) return st;
+        } else if (w->capture_ints && (f->type == ZRD_INTSXP || f->type == ZRD_LGLSXP) &&
             len <= ZRD_INT_CAP) {
             for (int64_t i = 0; i < len; i++)
                 if ((st = in_int(w, &f->ints[i]))) return st;

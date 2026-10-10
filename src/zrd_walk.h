@@ -134,6 +134,16 @@ typedef struct zrd_event {
 
 /* Return non-zero to stop the walk with ZRD_STOPPED. */
 typedef int (*zrd_event_fn)(void *ctx, const zrd_event *ev);
+
+/* Called after the BEGIN event of an atomic vector or a CHARSXP: returns
+ * where to decode its payload, or NULL to skip it. A vector's values go
+ * as int32_t (LGLSXP, INTSXP; NA as INT32_MIN), double (REALSXP; R's NA
+ * keeps its bit pattern), pairs of doubles (CPLXSXP) or bytes (RAWSXP), in
+ * the host's byte order; a CHARSXP's bytes as they are, escapes decoded. */
+typedef void *(*zrd_payload_fn)(void *ctx, const zrd_event *ev);
+
+/* R's NA_real_: a NaN with payload 1954 (arithmetic.c). */
+#define ZRD_NA_REAL_BITS UINT64_C(0x7FF00000000007A2)
 /* Called every 65,536 items and between blocks of a long skip; R's side
  * checks for interrupts here. */
 typedef void (*zrd_tick_fn)(void *ctx);
@@ -154,6 +164,8 @@ typedef struct zrd_walk {
     void *event_ctx;
     zrd_tick_fn tick;
     void *tick_ctx;
+    zrd_payload_fn payload;
+    void *payload_ctx;
 
     zrd_frame *stack;     /* max_depth + 1 frames, allocated once */
     int depth;            /* frames in use */
