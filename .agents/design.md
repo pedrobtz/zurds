@@ -239,6 +239,16 @@ and package, the S4 class), and `severity` (`"executes"` for promises,
 closures and bytecode; `"reaches_out"` for environments, namespaces and
 external pointers; `"needs_package"` for ALTREP and S4).
 
+**Settled in Stage 6.** Base R's own ALTREP classes (compact sequences,
+deferred strings, wrappers; package `"base"`) are not findings: they need
+no package, and the data builder materialises them; any other ALTREP class
+is. A reference (`REFSXP`) to an environment, external pointer, weak,
+namespace, package or persistent reference read earlier is a finding of
+that kind at the reference's own path, so every path that reaches it is
+listed. Language objects, symbols and primitives are not findings: they
+run nothing as a file loads. An S4 object is found by `OBJSXP` or by the
+S4 bit on a vector.
+
 `rds_read_data()` with `strict = TRUE` refuses any finding of severity
 `"executes"` or `"reaches_out"` with `zurds_unsafe_content`; with
 `strict = FALSE` it replaces them by `NULL` and warns once per kind.

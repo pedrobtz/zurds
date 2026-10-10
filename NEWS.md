@@ -10,3 +10,6 @@
   native binary (either byte order) and ASCII streams.
 * `rds_toc()` lists the objects of an `.rda` file, with their types, classes,
   lengths, dimensions, sizes and offsets, without building any of them.
+* `rds_scan()` reports everything in a file that can run code, reach outside
+  it, or needs a package; `rds_is_safe()` is `TRUE` when it finds nothing;
+  `rds_deps()` lists the packages a file needs. `rds_toc()` fills `risky`.
