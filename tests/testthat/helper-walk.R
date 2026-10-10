@@ -93,26 +93,6 @@ buildable_fixture_objects <- setdiff(buildable_fixture_objects, c("pairlist", "s
 # The formula fixture is not one: it keeps the environment it was made in.
 clean_fixture_objects <- c(
   data_fixture_objects, "compact_seq", "deferred_string", "language",
-  "builtin", "special"
+  "builtin", "special", "zlib"
 )
 
-# A lazy-load database written by hand at `base`, one entry per element of
-# `entries` (raw serialized streams), zlib-compressed as R's
-# R_compress1() writes them: a big-endian length, then the zlib stream.
-write_lazyload <- function(base, entries) {
-  con <- file(paste0(base, ".rdb"), "wb")
-  vars <- list()
-  off <- 0L
-  for (name in names(entries)) {
-    s <- entries[[name]]
-    z <- memCompress(s, "gzip")
-    bytes <- c(writeBin(length(s), raw(), endian = "big"), z)
-    writeBin(bytes, con)
-    vars[[name]] <- c(off, length(bytes))
-    off <- off + length(bytes)
-  }
-  close(con)
-  saveRDS(list(variables = vars, references = list(), compressed = TRUE),
-          paste0(base, ".rdx"))
-  invisible(base)
-}

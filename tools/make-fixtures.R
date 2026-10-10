@@ -183,6 +183,59 @@ for (comp in compressions) {
   add(f, "rda", paste(names(rda_objs), collapse = " "), "xdr", 3L, comp)
 }
 
+# zlib streams with what they decompress to, for the lazy-load decoder:
+# fixed and dynamic codes, stored blocks, an empty stream, long matches.
+# Written here so the tests need not call memCompress().
+local({
+  set.seed(1)
+  plain <- list(
+    empty = raw(0), tiny = charToRaw("a"), text = charToRaw(strrep("lazy-load ", 2000)),
+    random = as.raw(sample(0:255, 20000, TRUE)), zeros = raw(70000),
+    serialized = serialize(mtcars, NULL)
+  )
+  saveRDS(lapply(plain, function(p) list(plain = p, zlib = memCompress(p, "gzip"))),
+          file.path(out, "zlib.rds"))
+  add("zlib.rds", "rds", "zlib", "xdr", 3L, "gzip")
+})
+
+# Lazy-load databases written by hand: one entry an unforced promise whose
+# code would create a file, as R refuses to write one; then the same layout
+# with bzip2 (compressed = 2) and xz (compressed = 3) entries, as
+# makeLazyLoadDB() writes them.
+local({
+  int <- function(...) writeBin(as.integer(c(...)), raw(), endian = "big")
+  chars <- function(s) c(int(262153, nchar(s)), charToRaw(s))
+  v <- unclass(getRversion())[[1]]
+  header <- c(charToRaw("X\n"), int(3, sum(v * c(65536, 256, 1)), 197888, 5),
+              charToRaw("UTF-8"))
+  call <- c(int(6, 1), chars("file.create"), int(2, 16, 1),
+            chars("zurds-lazyload-promise-was-forced"), int(254))
+  entries <- list(p = c(header, int(5 + 1024, 253, 252), call),
+                  x = serialize(c(1L, 2L, 3L), NULL))
+  con <- file(file.path(out, "lazyload_promise.rdb"), "wb")
+  vars <- list()
+  off <- 0
+  for (name in names(entries)) {
+    s <- entries[[name]]
+    bytes <- c(writeBin(length(s), raw(), endian = "big"), memCompress(s, "gzip"))
+    writeBin(bytes, con)
+    vars[[name]] <- as.integer(c(off, length(bytes)))
+    off <- off + length(bytes)
+  }
+  close(con)
+  saveRDS(list(variables = vars, references = list(), compressed = TRUE),
+          file.path(out, "lazyload_promise.rdx"))
+  for (f in c("lazyload_promise.rdb", "lazyload_promise.rdx"))
+    add(f, "lazyload", "p x", "xdr", 3L, "zlib")
+  for (comp in 2:3) {
+    base <- paste0("lazyload_c", comp)
+    e <- list2env(objs[c("integer", "data_frame", "character")])
+    tools:::makeLazyLoadDB(e, file.path(out, base), compress = comp)
+    for (f in paste0(base, c(".rdb", ".rdx")))
+      add(f, "lazyload", paste(ls(e), collapse = " "), "xdr", 3L, c("bzip2", "xz")[comp - 1])
+  }
+})
+
 # A lazy-load database, as R CMD INSTALL builds a package's.
 ll_env <- list2env(objs[c("integer", "data_frame", "closure")])
 tools:::makeLazyLoadDB(ll_env, file.path(out, "lazyload"))
