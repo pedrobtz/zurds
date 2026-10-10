@@ -4,6 +4,8 @@
 
 - [`rds_deps()`](https://pedrobtz.github.io/zurds/reference/rds_deps.md)
   : Packages a file needs
+- [`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md)
+  : Extract one object or element from an R serialization file
 - [`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md)
   : Header of an R serialization file
 - [`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md)

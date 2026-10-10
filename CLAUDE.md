@@ -25,11 +25,13 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 7, 2026-10-10: every inspection and safety function and
-[`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md).
+Stages 0 to 8, 2026-10-10: every inspection and safety function,
+[`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md)
+and
+[`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md).
 The walk reads XDR, native binary and ASCII streams of every item kind R
-writes. Not yet: extraction and lazy-load databases. See the roadmap’s
-stage table for what is done.
+writes. Not yet: lazy-load databases. See the roadmap’s stage table for
+what is done.
 
 ## Stage tracking
 

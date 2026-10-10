@@ -67,6 +67,11 @@ A `zurds_unsafe_content` error carries `findings`, as
 reports them, and `refused`, a data frame of the items that could not be
 built (`path`, `type`).
 
+## See also
+
+Other reading:
+[`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md)
+
 ## Examples
 
 ``` r

@@ -33,3 +33,6 @@
   [`unserialize()`](https://rdrr.io/r/base/serialize.html). The result
   is [`identical()`](https://rdrr.io/r/base/identical.html) to
   [`readRDS()`](https://rdrr.io/r/base/readRDS.html).
+- [`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md)
+  reads one object, list element or data frame column without building
+  the rest; `use_r = TRUE` hands only that item to R.
