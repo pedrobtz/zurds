@@ -1,0 +1,27 @@
+# Fails each allocation of tools/alloc-exercise.R in turn and checks that R
+# reports an error rather than dying: the walk's out-of-memory paths, which
+# no ordinary test reaches. Weekly, and on a pull request that changes this
+# file or the C sources' allocation code paths.
+on:
+  schedule:
+    - cron: "0 4 * * 0"
+  pull_request:
+    paths:
+      - ".github/workflows/alloc-failure.yaml"
+      - "tools/alloc-exercise.R"
+  workflow_dispatch:
+
+name: alloc-failure
+
+permissions: read-all
+
+jobs:
+  alloc-failure:
+    uses: pedrobtz/r-actions/.github/workflows/alloc-failure.yml@v1
+    with:
+      baseline-run: Rscript tools/alloc-exercise.R --baseline
+      run: Rscript tools/alloc-exercise.R
+      expect-pattern: "cannot allocate|memory exhausted|out of memory"
+      target-pattern: "out of memory for|cannot allocate a zurds|cannot allocate the walk"
+      min-target-hits: 1
+      max-allocations: 300

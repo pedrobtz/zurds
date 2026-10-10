@@ -1,8 +1,11 @@
 # Gates over the built package, each seen to fail on a planted defect before
 # it is trusted (roadmap, rules for every stage).
 #
-#   symbols  the shared object exports R_init_zurds only, and references no
-#            console-output or process-exit symbol (design section 13)
+#   symbols     the shared object exports R_init_zurds only, and references
+#               no console-output or process-exit symbol (design section 13)
+#   standalone  the walk builds with no R (-DZRD_STANDALONE) and walks every
+#               uncompressed XDR fixture of the full matrix, and every prefix
+#               of each, clean under ASan and UBSan (roadmap Stage 2)
 on:
   push:
     branches: [main, master]
@@ -38,3 +41,26 @@ jobs:
           mkdir -p "$RUNNER_TEMP/lib"
           R CMD INSTALL --no-test-load -l "$RUNNER_TEMP/lib" .
           tools/check-symbols "$RUNNER_TEMP/lib/zurds/libs/zurds.so"
+
+  standalone:
+    runs-on: ubuntu-latest
+    name: standalone walk
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      # For zufast's headers, and for R to write the fixtures.
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+      - name: Install clang
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q clang
+      - name: Write the full fixture matrix
+        run: Rscript tools/make-fixtures.R --full "$RUNNER_TEMP/full"
+      - name: Build without R and walk it sanitized
+        env:
+          CC: clang
+        run: tools/run-standalone "$RUNNER_TEMP/full"

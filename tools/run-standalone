@@ -1,0 +1,44 @@
+#!/bin/sh
+# Builds the walk with no R headers and no R library (-DZRD_STANDALONE),
+# under ASan and UBSan, and walks every uncompressed XDR fixture and every
+# proper prefix of each (roadmap Stage 2; design section 19, criterion 4).
+# zufast's headers are the only thing taken from the R library.
+#
+# Usage: tools/run-standalone [fixtures-dir]   (default: tests/testthat/fixtures)
+set -eu
+
+DIR="${1:-tests/testthat/fixtures}"
+CC="${CC:-cc}"
+ZUFAST=$(Rscript -e 'cat(system.file("include", package = "zufast"))')
+[ -n "$ZUFAST" ] || { echo "zufast is not installed" >&2; exit 2; }
+
+out=$(mktemp -d)
+trap 'rm -rf "$out"' EXIT
+FLAGS="-std=c99 -g -O1 -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all"
+# shellcheck disable=SC2086
+$CC $FLAGS -Wall -Wextra -pedantic -Werror -DZRD_STANDALONE -Isrc -I"$ZUFAST" \
+  src/zrd_reader.c src/zrd_walk.c tools/standalone/walk-main.c -o "$out/walk"
+
+# The binary must not link R: the point of the build.
+if command -v ldd >/dev/null 2>&1 && ldd "$out/walk" | grep -q 'libR\.'; then
+  echo "FAIL: the standalone walk links libR" >&2
+  exit 1
+fi
+
+walked=0
+fail=0
+for f in "$DIR"/*-xdr-*-none.rds "$DIR"/*-xdr-*-none.rda; do
+  [ -f "$f" ] || continue
+  set +e
+  "$out/walk" --prefixes "$f"
+  rc=$?
+  set -e
+  case $rc in
+    0) walked=$((walked + 1)) ;;
+    2) ;;
+    *) fail=1 ;;
+  esac
+done
+[ "$walked" -gt 0 ] || { echo "FAIL: no fixture was walked" >&2; exit 1; }
+[ "$fail" = 0 ] || { echo "FAIL: see above" >&2; exit 1; }
+echo "==> standalone walk: $walked fixtures and all their prefixes, clean under ASan and UBSan"
