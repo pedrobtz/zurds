@@ -1,0 +1,11 @@
+# Portable make only: every object is listed by hand, since $(wildcard) would
+# cost SystemRequirements: GNU make. There is no Makevars.win: R on Windows
+# uses this file when that one is absent, which keeps the two from drifting.
+#
+# $(C_VISIBILITY) hides every symbol but R_init_zurds (design section 13,
+# family rule R3); tools/check-symbols verifies it.
+PKG_CFLAGS = $(C_VISIBILITY)
+
+OBJECTS = \
+	init.o \
+	zrd_info.o
