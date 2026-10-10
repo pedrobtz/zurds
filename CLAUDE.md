@@ -21,15 +21,10 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stages 0 to 3, 2026-10-10: `zurds_info()`, the condition classes, symbol
-hiding and its gate; the source that opens a path, raw vector or
-connection and reads decompressed bytes; the fixture generator; and the
-walk over XDR streams of every item kind R writes: data, closures,
-promises, language, environments (with cycles), namespace and package
-references, persistent references, external pointers, weak references,
-S4 objects, bytecode and ALTREP. The binary and ASCII formats are refused
-as "not walked yet". No user-facing function beyond `zurds_info()` yet;
-the tests drive the internal `zrd_walk_info()`.
+Stages 0 to 4, 2026-10-10: `zurds_info()`, `rds_info()` and `rds_str()`. The walk reads XDR, native binary and ASCII
+streams of every item kind R writes. Not yet: `rds_toc()`, the scanner, the builder, extraction and lazy-load
+databases. See the roadmap's
+stage table for what is done.
 
 ## Stage tracking
 
@@ -84,7 +79,12 @@ writes as the closure cell's continuation. Bytecode's structures
 against the limits but emit no events, and a call's cdr reuses its frame.
 `src/zrd_walk_r.c` runs it from R with
 the walk owned by an external pointer; `R/walk.R` maps its status to a
-condition class. `src/init.c` registers `.Call` routines and is the only
+condition class. The token layer (`in_int()`, `skip_vector()`,
+`in_string()` in `src/zrd_walk.c`) is the only place the three formats
+differ. `src/zrd_trace.c` records events (down to a depth, with strings
+inside attributes and symbol names) for R: `zrd_trace()` and
+`zrd_event_tree()` in `R/trace.R` turn them into a table and a tree, which
+`rds_str()` renders. `src/init.c` registers `.Call` routines and is the only
 exported symbol. Internal C symbols use the `zrd_` / `ZRD_` prefix. The walk
 (`src/zrd_walk.c`, from Stage 2) is R-free and must compile with
 `-DZRD_STANDALONE`; the data builder (`src/zrd_build.c`) is the only place
@@ -118,6 +118,13 @@ R objects are made from stream content. R-side conditions are built in
   `.registration = TRUE`). An R function with the same name as a `.Call`
   routine shadows it; the R wrappers use different names
   (`zrd_walk_info()` calls `zrd_walk_stats`).
+- Exported functions pass `sys.call()` as `call` to the helpers; internal
+  helpers default `call = NULL`. Never pass an environment: it becomes the
+  condition's call and prints as "Error in `<environment>`".
+- ASCII mirrors R's `InWord()`, which consumes the white-space character
+  after each word, and `InString()`, which does not. The walk takes the
+  trailing newline after the root item so a walk ends where the stream
+  does.
 - Gates need canaries: a new gate is trusted only once it has failed on a
   planted defect.
 
