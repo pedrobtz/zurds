@@ -1,0 +1,30 @@
+# Coverage-guided fuzzing of the R-free walk, scanner and payload decoding
+# (roadmap Stage 10; design section 19, criterion 4), with libFuzzer under
+# ASan and UBSan, seeded from the fixtures. Short on pull requests, long
+# nightly; the corpus cache joins them into one campaign. The canary that
+# shows a crash would fail this lives in gates.yaml (fuzz canary).
+on:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+name: fuzz
+
+permissions: read-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    uses: pedrobtz/r-actions/.github/workflows/fuzz.yml@v1
+    with:
+      harness: tools/fuzz/harness.c
+      sources: src/zrd_reader.c src/zrd_walk.c src/zrd_scan.c src/zrd_inflate.c
+      # zufast is LinkingTo-only and not on CRAN: its headers from GitHub.
+      github-packages: pedrobtz/zufast
+      cflags: -g -O1 -fno-omit-frame-pointer -DZRD_STANDALONE -Isrc -I.github-packages/zufast/inst/include
+      seed-corpus: tests/testthat/fixtures
+      max-total-time: ${{ github.event_name == 'schedule' && 1800 || 120 }}
