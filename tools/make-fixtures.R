@@ -52,6 +52,22 @@ fixture_objects <- function() {
     environment = e,
     formula = y ~ x,
     external_pointer = methods::new("externalptr"),
+    env_cycle = local({
+      e <- new.env(parent = emptyenv())
+      e$self <- e
+      lockEnvironment(e)
+      e
+    }),
+    promise = local({
+      e <- new.env(parent = emptyenv())
+      delayedAssign("p", stop("never forced"), assign.env = e)
+      e
+    }),
+    builtin = sum,
+    special = `if`,
+    namespace_closure = stats::sd,
+    package_env = as.environment("package:stats"),
+    deferred_string = as.character(1:5),
     s4 = local({
       where <- new.env()
       methods::setClass("ZurdsFixture", representation(x = "numeric"), where = where)
@@ -114,6 +130,14 @@ for (nm in names(objs)) {
   saveRDS(objs[[nm]], file.path(out, f))
   add(f, "rds", nm, "xdr", 3L, "gzip")
 }
+
+# A persistent reference: an environment written through a refhook, as
+# saveRDS(refhook =) writes it. In the default layout only.
+local({
+  f <- "persistent.rds"
+  saveRDS(new.env(), file.path(out, f), refhook = function(x) "zurds-ref")
+  add(f, "rds", "persistent", "xdr", 3L, "gzip")
+})
 
 # The matrix.
 for (nm in matrix_objects) for (fmt in formats) for (v in versions) for (comp in compressions) {
