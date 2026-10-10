@@ -8,12 +8,15 @@ static const R_CallMethodDef CallEntries[] = {
     {"zrd_source_new",    (DL_FUNC) &zrd_source_new,    1},
     {"zrd_source_peek",   (DL_FUNC) &zrd_source_peek,   2},
     {"zrd_source_drain",  (DL_FUNC) &zrd_source_drain,  1},
+    {"zrd_source_bytes",  (DL_FUNC) &zrd_source_bytes,  3},
     {"zrd_walk_stats",    (DL_FUNC) &zrd_walk_stats,    3},
     {"zrd_walk_trace",    (DL_FUNC) &zrd_walk_trace,    5},
     {"zrd_walk_head",     (DL_FUNC) &zrd_walk_head,     2},
     {"zrd_toc_walk",      (DL_FUNC) &zrd_toc_walk,      3},
     {"zrd_scan_walk",     (DL_FUNC) &zrd_scan_walk,     3},
-    {"zrd_build_walk",    (DL_FUNC) &zrd_build_walk,    6},
+    {"zrd_build_walk",    (DL_FUNC) &zrd_build_walk,    7},
+    {"zrd_children_walk", (DL_FUNC) &zrd_children_walk, 4},
+    {"zrd_extract_patch", (DL_FUNC) &zrd_extract_patch, 4},
     {NULL, NULL, 0}
 };
 
