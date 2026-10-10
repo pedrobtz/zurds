@@ -21,14 +21,15 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stages 0 to 2, 2026-10-10: `zurds_info()`, the condition classes, symbol
+Stages 0 to 3, 2026-10-10: `zurds_info()`, the condition classes, symbol
 hiding and its gate; the source that opens a path, raw vector or
 connection and reads decompressed bytes; the fixture generator; and the
-walk over XDR streams of data items (vectors, strings, lists, pairlists,
-attributes, symbols, references) with its limits. Closures, environments,
-bytecode, ALTREP and the binary and ASCII formats are refused as "not
-walked yet". No user-facing function beyond `zurds_info()` yet; the tests
-drive the internal `zrd_walk_info()`.
+walk over XDR streams of every item kind R writes: data, closures,
+promises, language, environments (with cycles), namespace and package
+references, persistent references, external pointers, weak references,
+S4 objects, bytecode and ALTREP. The binary and ASCII formats are refused
+as "not walked yet". No user-facing function beyond `zurds_info()` yet;
+the tests drive the internal `zrd_walk_info()`.
 
 ## Stage tracking
 
@@ -77,7 +78,11 @@ side that fills it with `R_ReadConnection()`. `src/zrd_walk.c` is the walk:
 one frame per open item on an explicit stack of `max_depth + 1` frames, a
 `step()` loop that begins the next child or ends the item, and BEGIN/END
 events to a callback. A pairlist's next cell reuses its frame, so long
-pairlists do not deepen the stack. `src/zrd_walk_r.c` runs it from R with
+pairlists do not deepen the stack; so does a closure's body, which R
+writes as the closure cell's continuation. Bytecode's structures
+(`ReadBC1`, `ReadBCLang`) have no flags: they get pseudo-frames that count
+against the limits but emit no events, and a call's cdr reuses its frame.
+`src/zrd_walk_r.c` runs it from R with
 the walk owned by an external pointer; `R/walk.R` maps its status to a
 condition class. `src/init.c` registers `.Call` routines and is the only
 exported symbol. Internal C symbols use the `zrd_` / `ZRD_` prefix. The walk

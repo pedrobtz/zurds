@@ -65,3 +65,14 @@ xdr_stream <- function(...) {
 
 # Flags for a type with the attribute bit set or not.
 xdr_flags <- function(type, attr = FALSE) type + if (attr) 512 else 0
+
+# How many items of a type the walk began; `type` is a SEXPTYPE or
+# pseudo-type number, as serialize.c numbers them.
+walked_types <- function(res, type) res$types[type + 1L]
+
+sxp <- c(
+  SYMSXP = 1, LISTSXP = 2, CLOSXP = 3, ENVSXP = 4, PROMSXP = 5, LANGSXP = 6,
+  SPECIALSXP = 7, BUILTINSXP = 8, CHARSXP = 9, DOTSXP = 17, BCODESXP = 21,
+  EXTPTRSXP = 22, WEAKREFSXP = 23, OBJSXP = 25, ALTREP_SXP = 238,
+  PERSISTSXP = 247, PACKAGESXP = 248, NAMESPACESXP = 249, REFSXP = 255
+)
