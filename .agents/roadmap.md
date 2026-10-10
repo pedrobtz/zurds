@@ -36,7 +36,7 @@ Rules that hold for every stage:
 | 7 | The data-only builder and rds_read_data() | M | #9 | 2026-10-10 | [#24](https://github.com/pedrobtz/zurds/pull/24) |
 | 8 | Extraction | M | #10 | 2026-10-10 | [#25](https://github.com/pedrobtz/zurds/pull/25) |
 | 9 | Lazy-load databases | M | #11 | 2026-10-10 | [#26](https://github.com/pedrobtz/zurds/pull/26) |
-| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | 2026-10-10 | |
+| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | 2026-10-10 | [#27](https://github.com/pedrobtz/zurds/pull/27) |
 | 11 | Documentation | S | #13 | | |
 | 12 | v0.1.0 readiness | S | #14 | | |
 
