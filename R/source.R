@@ -141,22 +141,24 @@ zrd_check_empty <- function(input, head, call) {
   )
 }
 
+# A compressed raw vector is written to a temporary file and read like a
+# path, through gzfile(): memDecompress() keeps doubling its buffer on a
+# truncated gzip stream when R uses zlib, until memory runs out.
 zrd_open_raw <- function(x, call) {
   compression <- zrd_detect_compression(x[seq_len(min(6L, length(x)))])
-  tail <- zrd_tail(x, 4L)
-  zrd_check_xz_footer(compression, zrd_tail(tail, 2L), call)
   if (compression != "none") {
-    fail <- function(e) {
-      zrd_abort(
-        "zurds_decompression_error",
-        paste0("cannot decompress the ", compression, " data: ",
-               conditionMessage(e)),
-        call = call
-      )
-    }
-    # xz cut short only warns, and returns what it decoded.
-    x <- tryCatch(memDecompress(x, type = compression), error = fail, warning = fail)
-    if (compression == "gzip") zrd_check_gzip_size(length(x), zrd_raw_isize(tail), call)
+    tmp <- tempfile("zurds-", fileext = ".bin")
+    writeBin(x, tmp)
+    input <- tryCatch(
+      zrd_open_path(tmp, "rds", call),
+      error = function(e) {
+        unlink(tmp)
+        stop(e)
+      }
+    )
+    input$path <- NA_character_
+    input$tempfile <- tmp
+    return(input)
   }
   list(source = .Call(zrd_source_new, x), kind = NA_character_,
        compression = compression, path = NA_character_, gzip_size = NA_real_,
@@ -233,11 +235,6 @@ zrd_file_compression <- function(path, call) {
   zrd_detect_compression(head)
 }
 
-# The last `n` elements of `x`, or all of it when shorter.
-zrd_tail <- function(x, n) {
-  x[seq_len(min(n, length(x))) + max(0L, length(x) - n)]
-}
-
 # The last `n` bytes of a file.
 zrd_file_tail <- function(path, n) {
   size <- file.size(path)
@@ -297,6 +294,7 @@ zrd_close <- function(input) {
   if (isTRUE(input$owns_connection)) {
     try(close(input$connection), silent = TRUE)
   }
+  if (!is.null(input$tempfile)) unlink(input$tempfile)
   invisible()
 }
 

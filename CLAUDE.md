@@ -86,12 +86,16 @@ R objects are made from stream content. R-side conditions are built in
   behind `#ifndef ZRD_STANDALONE`.
 - Limits are checked before a length from the file is trusted, never after.
 - An unknown pseudo-type is a parse error, never a skip.
-- R's codecs do not fail loudly on truncated input: gzip reads short,
-  bzip2 and zstd read nothing, xz warns (through a connection) or returns
-  a prefix (through `memDecompress()`). `R/source.R` checks the gzip
-  trailer's ISIZE, the xz footer, empty output, and turns codec warnings
-  into `zurds_decompression_error`. Read source bytes only through
-  `zrd_source_call()`, or a codec warning escapes as a plain warning.
+- R's codecs do not fail loudly on truncated input: through `gzfile()`,
+  gzip reads short, bzip2 and zstd read nothing, and xz warns.
+  `R/source.R` checks the gzip trailer's ISIZE, the xz footer and empty
+  output, and turns codec warnings into `zurds_decompression_error`. Read
+  source bytes only through `zrd_source_call()`, or a codec warning
+  escapes as a plain warning.
+- Never decompress input with `memDecompress()`: with zlib (Linux R
+  without libdeflate) it doubles its buffer forever on truncated gzip, and
+  the process is killed. Compressed raw vectors go through a temporary file
+  and `gzfile()` instead.
 - Gates need canaries: a new gate is trusted only once it has failed on a
   planted defect.
 
