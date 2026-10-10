@@ -36,7 +36,7 @@ Rules that hold for every stage:
 | 7 | The data-only builder and rds_read_data() | M | #9 | 2026-10-10 | [#24](https://github.com/pedrobtz/zurds/pull/24) |
 | 8 | Extraction | M | #10 | 2026-10-10 | [#25](https://github.com/pedrobtz/zurds/pull/25) |
 | 9 | Lazy-load databases | M | #11 | 2026-10-10 | [#26](https://github.com/pedrobtz/zurds/pull/26) |
-| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | | |
+| 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | 2026-10-10 | |
 | 11 | Documentation | S | #13 | | |
 | 12 | v0.1.0 readiness | S | #14 | | |
 
@@ -358,6 +358,11 @@ permanent regression test; changes in R's format are caught.
 **Work.**
 - Fuzz harness with `zufuzz` on the standalone walk, under ASan and
   UBSan, seeded from every fixture, in a scheduled CI job.
+  *Deviation 2026-10-10:* `zufuzz` is a package skeleton with no fuzzing
+  yet, so the harness (`tools/fuzz/harness.c`: the walk, the scanner and
+  payload decoding) runs under r-actions' `fuzz.yml` (libFuzzer, ASan,
+  UBSan): two minutes per pull request, thirty nightly, one cached corpus.
+  Its canary is `tools/run-fuzz-canary` in `gates.yaml`.
 - Hostile inputs (§14), each a test: 2^52-element vector, bad `REFSXP`,
   nesting 10^6 deep, a 10 GiB gzip bomb, an endless `.rda` pairlist, a
   truncated ASCII stream, an unknown pseudo-type.

@@ -432,6 +432,11 @@ a raw vector.
   `rds_read_data()`.
 - **R drift**: CI diffs `serialize.c` at each new R release against the
   commit recorded in the design and fails until the change is reviewed.
+  **Stage 10:** `tools/check-drift` compares the SHA-256 of `serialize.c`
+  on R-devel and on the newest `R-x-y-branch` (the mirror has no release
+  tags) with `tools/drift/reviewed.txt`, weekly. Reviewed 2026-10-10:
+  a97c000 and `R-4-6-branch`, which differs only in iconv clean-up, error
+  messages and the lazy-load file cache.
 - **Fuzzing** with `zufuzz` on the R-free walk, under ASan and UBSan,
   seeded from every fixture; the canary must crash first.
 - **Hostile inputs**, each a permanent regression: a long vector of
@@ -450,6 +455,18 @@ Measured by `tools/run-benchmarks`, recorded in the design:
   `load()`'s time for the whole file, with peak memory near the object's
   size rather than the file's.
 - `rds_read_data()` on data frames: within 1.5× of `readRDS()`.
+
+**Measured 2026-10-10 (Stage 10)** by `tools/run-benchmarks` on R 4.6.1,
+macOS arm64 (Apple silicon), each step in its own R process; peaks are
+the process's resident memory, of which an idle R with zurds loaded takes
+70 MB. The file: ten data frames of 5 million rows by 5 double columns,
+2.0 GB decompressed, 1.1 GB as saved by `save()`.
+
+| Target | Measured | Baseline | Met |
+| --- | --- | --- | --- |
+| `rds_toc()` bounded by decompression, under 64 MB | 3.05 s, 70 MB peak (0 MB over idle) | decompressing the file: 3.35 s | yes |
+| `rds_extract()` of one data frame (190 MB) | 4.76 s, 259 MB peak | `load()` of the whole file: 5.23 s, 993 MB | yes |
+| `rds_read_data()` on a data frame (1 million rows) | 0.08 s | `readRDS()`: 0.09 s | yes |
 
 ## 16. Decisions
 
