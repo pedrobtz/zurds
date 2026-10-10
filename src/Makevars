@@ -10,6 +10,7 @@ OBJECTS = \
 	init.o \
 	zrd_build.o \
 	zrd_extract.o \
+	zrd_inflate.o \
 	zrd_info.o \
 	zrd_reader.o \
 	zrd_scan.o \

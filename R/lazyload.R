@@ -34,10 +34,13 @@ zrd_lazyload_open <- function(path, call) {
 }
 
 # The serialized stream of one entry: its bytes in the .rdb, decompressed
-# as R_decompress1/2/3 (connections.c) do. memDecompress() is R's own C
-# path for those codecs (design section 3); the length the entry declares
-# is checked against the building limit before, and against the result
-# after.
+# as R_decompress1/2/3 (connections.c) lay them out. The length the entry
+# declares is checked against the building limit before anything is
+# decompressed. zlib, the default, goes through zurds' own bounded decoder
+# (src/zrd_inflate.c): R's memDecompress() grows its buffer without bound
+# on a truncated zlib stream when R lacks libdeflate. bzip2 and xz go
+# through memDecompress(), which fails cleanly on them, and must give the
+# declared length.
 zrd_lazyload_entry <- function(db, key, name, call) {
   rdb <- paste0(db$base, ".rdb")
   size <- file.size(rdb)
@@ -71,11 +74,21 @@ zrd_lazyload_entry <- function(db, key, name, call) {
     }
     data <- bytes[-(1:5)]
   }
-  out <- if (type == "none") data else tryCatch(
-    memDecompress(data, type = type),
-    error = function(e) NULL,
-    warning = function(w) NULL
-  )
+  out <- if (type == "none") {
+    data
+  } else if (type == "gzip") {
+    .Call(zrd_inflate_raw, data, declared)
+  } else {
+    # R writes xz entries as raw LZMA2; zrd_xz_wrap() puts them in the
+    # .xz container memDecompress() reads.
+    if (type == "xz") data <- .Call(zrd_xz_wrap, data, declared)
+    tryCatch(memDecompress(data, type = type), error = function(e) NULL,
+             warning = function(w) NULL)
+  }
+  if (is.character(out)) {
+    zrd_abort("zurds_decompression_error",
+              paste0("entry `", name, "` cannot be decompressed: ", out), call = call)
+  }
   if (is.null(out) || length(out) != declared) {
     zrd_abort("zurds_decompression_error",
               paste0("entry `", name, "` cannot be decompressed: it is truncated or corrupt"),

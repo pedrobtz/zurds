@@ -12,6 +12,8 @@ SEXP zrd_source_new(SEXP x);
 SEXP zrd_source_peek(SEXP ptr, SEXP n);
 SEXP zrd_source_drain(SEXP ptr);
 SEXP zrd_source_bytes(SEXP ptr, SEXP skip, SEXP n);
+SEXP zrd_inflate_raw(SEXP in, SEXP n);
+SEXP zrd_xz_wrap(SEXP in, SEXP n);
 SEXP zrd_walk_stats(SEXP src, SEXP skip, SEXP limits);
 SEXP zrd_walk_trace(SEXP src, SEXP skip, SEXP limits, SEXP max_depth, SEXP max_events);
 SEXP zrd_walk_head(SEXP src, SEXP skip);
