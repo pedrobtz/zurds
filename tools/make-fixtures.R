@@ -39,7 +39,8 @@ fixture_objects <- function() {
     raw = as.raw(c(0, 1, 255)),
     list = list(1L, "b", list(TRUE, NULL)),
     named_list = list(x = 1, y = list(z = "deep")),
-    data_frame = data.frame(n = 1:3, s = c("x", "y", NA), stringsAsFactors = FALSE),
+    # c() rather than 1:3, which would stay a compact (ALTREP) sequence.
+    data_frame = data.frame(n = c(1L, 2L, 3L), s = c("x", "y", NA), stringsAsFactors = FALSE),
     factor = factor(c("lo", "hi", "lo"), levels = c("lo", "hi")),
     matrix = matrix(1:6, 2, dimnames = list(c("r1", "r2"), NULL)),
     compact_seq = 1:10,
