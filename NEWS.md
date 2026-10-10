@@ -16,3 +16,5 @@
 * `rds_read_data()` reads data-only files with a reader written in C that
   builds only vectors, lists and attributes, and never calls `unserialize()`.
   The result is `identical()` to `readRDS()`.
+* `rds_extract()` reads one object, list element or data frame column
+  without building the rest; `use_r = TRUE` hands only that item to R.

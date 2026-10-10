@@ -459,7 +459,13 @@ Reasons where they are not in the section cited:
 1. **Opt-in R deserialization in `rds_extract()`.** For a closure or a
    model object, hand the item's bytes to `unserialize()` after a clean
    scan of that item only? Recommended: yes, behind `use_r = TRUE`, with
-   the scan's findings attached to the result.
+   the scan's findings attached to the result. **Settled 2026-10-10
+   (Stage 8): yes, as recommended.** The item's bytes refer back to symbols
+   read before it; each such reference is replaced by the symbol's
+   definition and every reference inside the item renumbered, so the
+   stream given to `unserialize()` holds that item and nothing else. An
+   item referring to an environment (or any non-symbol) read before it
+   cannot be read alone, and is refused.
 2. **Data frames with list columns** of mixed types: build as lists (as
    proposed) or refuse in strict mode? Recommended: build. **Settled
    2026-10-10 (Stage 7): built as lists.**
