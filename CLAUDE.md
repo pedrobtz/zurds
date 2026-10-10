@@ -25,14 +25,17 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 and 1, 2026-10-10:
+Stages 0 to 2, 2026-10-10:
 [`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md),
-the condition classes, symbol hiding and its gate; the source
-(`R/source.R`, `src/zrd_source.c`, `src/zrd_reader.c`) that opens a
-path, raw vector or connection, detects the kind and compression and
-reads decompressed bytes in 64 KiB blocks; and the fixture generator. No
-walk, scanner or builder yet. See the roadmap’s stage table for what is
-done.
+the condition classes, symbol hiding and its gate; the source that opens
+a path, raw vector or connection and reads decompressed bytes; the
+fixture generator; and the walk over XDR streams of data items (vectors,
+strings, lists, pairlists, attributes, symbols, references) with its
+limits. Closures, environments, bytecode, ALTREP and the binary and
+ASCII formats are refused as “not walked yet”. No user-facing function
+beyond
+[`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md)
+yet; the tests drive the internal `zrd_walk_info()`.
 
 ## Stage tracking
 
@@ -66,6 +69,8 @@ tools/check-symbols --canary                     # the gate must reject this
 Rscript tools/make-fixtures.R                    # rewrite tests/testthat/fixtures
 Rscript tools/make-fixtures.R --full DIR         # the full matrix, into DIR
 ZURDS_FIXTURES=DIR Rscript -e 'devtools::test()' # the suite against DIR
+tools/run-standalone [DIR]                       # the walk without R, sanitized
+Rscript tools/alloc-exercise.R                   # what alloc-failure.yaml sweeps
 ```
 
 ## Architecture
@@ -76,13 +81,19 @@ the file with [`gzfile()`](https://rdrr.io/r/base/connections.html)
 (which decompresses everything R writes), wraps the connection or raw
 vector in a `zrd_source` external pointer, and detects the kind from the
 first decompressed bytes. `src/zrd_reader.c` is the R-free buffered
-reader the walk will consume; `src/zrd_source.c` is the R side that
-fills it with `R_ReadConnection()`. `src/init.c` registers `.Call`
-routines and is the only exported symbol. Internal C symbols use the
-`zrd_` / `ZRD_` prefix. The walk (`src/zrd_walk.c`, from Stage 2) is
-R-free and must compile with `-DZRD_STANDALONE`; the data builder
-(`src/zrd_build.c`) is the only place R objects are made from stream
-content. R-side conditions are built in `R/conditions.R` by
+reader the walk consumes; `src/zrd_source.c` is the R side that fills it
+with `R_ReadConnection()`. `src/zrd_walk.c` is the walk: one frame per
+open item on an explicit stack of `max_depth + 1` frames, a
+[`step()`](https://rdrr.io/r/stats/step.html) loop that begins the next
+child or ends the item, and BEGIN/END events to a callback. A pairlist’s
+next cell reuses its frame, so long pairlists do not deepen the stack.
+`src/zrd_walk_r.c` runs it from R with the walk owned by an external
+pointer; `R/walk.R` maps its status to a condition class. `src/init.c`
+registers `.Call` routines and is the only exported symbol. Internal C
+symbols use the `zrd_` / `ZRD_` prefix. The walk (`src/zrd_walk.c`, from
+Stage 2) is R-free and must compile with `-DZRD_STANDALONE`; the data
+builder (`src/zrd_build.c`) is the only place R objects are made from
+stream content. R-side conditions are built in `R/conditions.R` by
 `zrd_abort()`; the class chain lives in `zrd_condition_classes`. Default
 limits live in `zrd_default_limits()`.
 
@@ -110,6 +121,13 @@ limits live in `zrd_default_limits()`.
   truncated gzip, and the process is killed. Compressed raw vectors go
   through a temporary file and
   [`gzfile()`](https://rdrr.io/r/base/connections.html) instead.
+- Every walk rule cites the `serialize.c` function it mirrors (commit
+  `a97c000`). Keep the citation when changing a rule; Stage 10’s drift
+  check depends on it.
+- Native routine names are R objects in the namespace (`useDynLib` with
+  `.registration = TRUE`). An R function with the same name as a `.Call`
+  routine shadows it; the R wrappers use different names
+  (`zrd_walk_info()` calls `zrd_walk_stats`).
 - Gates need canaries: a new gate is trusted only once it has failed on
   a planted defect.
 
@@ -158,9 +176,11 @@ Calls `pedrobtz/r-actions` at `@v1`: `r-cmd-check.yml` (R-CMD-check),
 `valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml` (with
 `github-packages: pedrobtz/zufast`), `analyzers.yml`,
 `cran-special.yml`. `gates.yaml` runs `tools/check-symbols` and its
-canary. `fixtures.yaml` regenerates the fixtures on oldrel, release and
-devel, checks the checked-in manifest, and runs the suite on the full
-matrix.
+canary, and `tools/run-standalone` over the full fixture matrix.
+`arch.yaml` (32-bit, musl) and `alloc-failure.yaml` (fails each
+allocation of `tools/alloc-exercise.R`) run weekly. `fixtures.yaml`
+regenerates the fixtures on oldrel, release and devel, checks the
+checked-in manifest, and runs the suite on the full matrix.
 
 ## Commits and pull requests
 
