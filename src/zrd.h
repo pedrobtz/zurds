@@ -8,5 +8,8 @@
 #include <Rinternals.h>
 
 SEXP zrd_build_info(SEXP probe);
+SEXP zrd_source_new(SEXP x);
+SEXP zrd_source_peek(SEXP ptr, SEXP n);
+SEXP zrd_source_drain(SEXP ptr);
 
 #endif /* ZRD_H */
