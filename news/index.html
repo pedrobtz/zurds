@@ -36,6 +36,10 @@
 <h2 class="pkg-version" data-toc-text="0.0.0.9000" id="zurds-0009000">zurds 0.0.0.9000<a class="anchor" aria-label="anchor" href="#zurds-0009000"></a></h2>
 <ul><li>
 <code><a href="../reference/zurds_info.html">zurds_info()</a></code> reports the package and <code>zufast</code> versions, the default limits, and the compressions this R can read.</li>
+<li>
+<code><a href="../reference/rds_info.html">rds_info()</a></code> reads the header of an <code>.rds</code>, <code>.rda</code> or <code><a href="https://rdrr.io/r/base/serialize.html" class="external-link">serialize()</a></code> stream, or of a lazy-load database’s index: kind, format, version, the writing and minimum reading R versions, native encoding and compression.</li>
+<li>
+<code><a href="../reference/rds_str.html">rds_str()</a></code> prints a <code><a href="https://rdrr.io/r/utils/str.html" class="external-link">str()</a></code>-like summary of a file from its stream alone, without building any object or running any code. It reads XDR, native binary (either byte order) and ASCII streams.</li>
 </ul></div>
   </main></div>
 
