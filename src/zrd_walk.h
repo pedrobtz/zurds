@@ -119,7 +119,7 @@ typedef struct zrd_event {
     int64_t index;        /* ELEMENT and CELL: 0-based; CAR: its cell's */
     const char *name;     /* CAR of a tagged cell: the tag, not 0-terminated */
     size_t name_len;
-    int64_t ref;          /* REFSXP: the 1-based index it refers to */
+    int64_t ref;          /* REFSXP, BEGIN and END: the 1-based index it refers to */
     int ref_type;         /* REFSXP: what that entry is (SYMSXP, ENVSXP, ...) */
     const int32_t *ints;  /* INTSXP and LGLSXP END, when ints are captured */
     int nints;            /* and the vector has at most ZRD_INT_CAP: its

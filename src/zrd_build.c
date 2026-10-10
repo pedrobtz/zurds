@@ -60,13 +60,19 @@ typedef struct {
      * session's are translated to UTF-8. */
     void *iconv;
     /* Why the walk was stopped. */
-    int stop;               /* 1 invalid UTF-8; 2 out of memory */
+    int stop;               /* 1 invalid UTF-8; 2 out of memory; 3 done */
+    /* Extraction (rds_extract()): build only the item that begins at
+     * `target` in the stream; -1 builds the root. */
+    double target;
+    int in_target;
+    int base_depth;
     char stop_path[512];
     uint64_t stop_offset;
 } zrd_builder;
 
 #define STOP_ENCODING 1
 #define STOP_NOMEM 2
+#define STOP_DONE 3   /* the target item is built */
 
 static void builder_free(zrd_builder *b)
 {
@@ -246,13 +252,21 @@ static void *on_payload(void *ctx, const zrd_event *ev)
 {
     zrd_builder *b = ctx;
     int d = ev->depth;
+    if (b->target >= 0) {
+        if (!b->in_target) return NULL;
+        d -= b->base_depth;
+    }
+    if (d < 0 || d + 1 >= b->ndepth) return NULL;
     if (b->skip_depth >= 0 && d >= b->skip_depth) return NULL;
     if (b->kind[d] != N_VALUE || ev->length <= 0) return NULL;
     if (ev->type == ZRD_CHARSXP) {
         size_t need = (size_t) ev->length;
         if (need > b->ccap) {
             char *p = realloc(b->cbuf, need);
-            if (p == NULL) return NULL;
+            if (p == NULL) {
+                b->stop = STOP_NOMEM;
+                return NULL;
+            }
             b->cbuf = p;
             b->ccap = need;
         }
@@ -426,6 +440,7 @@ static void attach(zrd_builder *b, int d, const zrd_event *ev, SEXP v)
 static int on_end(zrd_builder *b, const zrd_event *ev)
 {
     int d = ev->depth;
+    if (b->stop) return 1;
     if (b->skip_depth >= 0) {
         if (d > b->skip_depth) return 0;
         b->skip_depth = -1;
@@ -468,9 +483,27 @@ static int on_end(zrd_builder *b, const zrd_event *ev)
 static int on_event(void *ctx, const zrd_event *ev)
 {
     zrd_builder *b = ctx;
+    zrd_event rel;
+    if (b->target >= 0) {
+        /* Before the target, only the walk's own reference table matters;
+         * the target is built as if it were the root. */
+        if (!b->in_target) {
+            if (ev->kind != ZRD_EVENT_BEGIN || (double) ev->offset != b->target) return 0;
+            b->in_target = 1;
+            b->base_depth = ev->depth;
+        }
+        rel = *ev;
+        rel.depth -= b->base_depth;
+        if (rel.depth == 0) rel.role = ZRD_ROLE_ROOT;
+        ev = &rel;
+    }
     if (zrd_scan_event(&b->scan, ev)) return b->stop = STOP_NOMEM;
-    if (ev->depth + 1 >= b->ndepth) return 0;
-    return ev->kind == ZRD_EVENT_BEGIN ? on_begin(b, ev) : on_end(b, ev);
+    int rc = 0;
+    if (ev->depth + 1 < b->ndepth)
+        rc = ev->kind == ZRD_EVENT_BEGIN ? on_begin(b, ev) : on_end(b, ev);
+    if (rc == 0 && b->target >= 0 && ev->kind == ZRD_EVENT_END && ev->depth == 0)
+        return b->stop = STOP_DONE;
+    return rc;
 }
 
 /* Encoding names compared as R's are written: "UTF-8", "utf8" and
@@ -493,7 +526,7 @@ static int same_encoding(const char *a, const char *b)
  * Returns the walk's result, the value, the refused items and the
  * scanner's findings. */
 SEXP zrd_build_walk(SEXP src, SEXP skip, SEXP limits, SEXP rda, SEXP strict,
-                    SEXP session_encoding)
+                    SEXP session_encoding, SEXP target)
 {
     zrd_source *s = zrd_source_get(src);
     size_t nskip = (size_t) Rf_asInteger(skip);
@@ -512,6 +545,8 @@ SEXP zrd_build_walk(SEXP src, SEXP skip, SEXP limits, SEXP rda, SEXP strict,
     R_RegisterCFinalizerEx(ptr, builder_finalizer, TRUE);
     b->holder = holder;
     b->rda = Rf_asLogical(rda) == TRUE;
+    b->target = Rf_asReal(target);
+    if (b->target >= 0) b->rda = 0;
     b->strict = Rf_asLogical(strict) != FALSE;
     b->skip_depth = -1;
     b->ndepth = lim.max_depth + 2;
@@ -544,6 +579,10 @@ SEXP zrd_build_walk(SEXP src, SEXP skip, SEXP limits, SEXP rda, SEXP strict,
     }
     if (st == ZRD_OK) st = zrd_walk_item(&b->w);
     if (b->stop == STOP_NOMEM) Rf_error("cannot allocate the builder");
+    if (b->stop == STOP_DONE && st == ZRD_STOPPED) st = ZRD_OK;
+    if (b->target >= 0 && !b->in_target && st == ZRD_OK) {
+        Rf_error("internal error: no item at the extraction offset");
+    }
 
     char path[512];
     zrd_walk_path(&b->w, path, sizeof path);

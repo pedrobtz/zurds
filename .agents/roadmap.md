@@ -34,7 +34,7 @@ Rules that hold for every stage:
 | 5 | Table of contents for .rda files | M | #7 | 2026-10-10 | [#22](https://github.com/pedrobtz/zurds/pull/22) |
 | 6 | The scanner and rds_deps() | M | #8 | 2026-10-10 | [#23](https://github.com/pedrobtz/zurds/pull/23) |
 | 7 | The data-only builder and rds_read_data() | M | #9 | 2026-10-10 | [#24](https://github.com/pedrobtz/zurds/pull/24) |
-| 8 | Extraction | M | #10 | | |
+| 8 | Extraction | M | #10 | 2026-10-10 | [#25](https://github.com/pedrobtz/zurds/pull/25) |
 | 9 | Lazy-load databases | M | #11 | | |
 | 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | | |
 | 11 | Documentation | S | #13 | | |
@@ -428,8 +428,8 @@ guarantee does and does not cover, from the package itself.
 
 ## Open questions
 
-- **`use_r = TRUE` in `rds_extract()`** (§17 Q1): planned as
-  recommended (opt-in, after a per-item scan). Blocks Stage 8.
+- **`use_r = TRUE` in `rds_extract()`** (§17 Q1): settled 2026-10-10 in
+  Stage 8, as recommended.
 - **Mixed-type list columns in strict mode** (§17 Q2): settled 2026-10-10
   in Stage 7: built as lists.
 - **`RDX2` / format version 2 in 0.1.0** (§17 Q3): settled 2026-10-10 in

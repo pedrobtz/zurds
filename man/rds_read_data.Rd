@@ -60,4 +60,8 @@ saveRDS(list(x = 1:3, f = function() "hello"), f)
 try(rds_read_data(f))
 rds_read_data(f, strict = FALSE)
 }
+\seealso{
+Other reading:
+\code{\link[=rds_extract]{rds_extract()}}
+}
 \concept{reading}

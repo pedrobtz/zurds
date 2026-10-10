@@ -71,13 +71,16 @@ rds_read_data <- function(x, strict = TRUE, kind = NULL) {
   zrd_build_result(res, input, limits, strict, call)
 }
 
-# Runs the builder; an error R raises while setting an attribute (a dim
-# that does not match, say) is the file's fault: a parse error.
-zrd_build_call <- function(input, limits, strict, call) {
+# Runs the builder over the whole stream, or (`target` >= 0) only over the
+# item that begins at that offset. An error R raises while setting an
+# attribute (a dim that does not match, say) is the file's fault: a parse
+# error.
+zrd_build_call <- function(input, limits, strict, call, target = -1) {
   tryCatch(
     zrd_source_call(
       .Call(zrd_build_walk, input$source, zrd_stream_skip(input), limits,
-            identical(input$kind, "rda"), strict, zrd_session_encoding()),
+            identical(input$kind, "rda"), strict, zrd_session_encoding(),
+            as.double(target)),
       call
     ),
     zurds_error = function(e) stop(e),

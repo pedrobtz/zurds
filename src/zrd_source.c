@@ -83,3 +83,20 @@ SEXP zrd_source_drain(SEXP ptr)
         R_CheckUserInterrupt();
     return Rf_ScalarReal((double) zrd_reader_offset(&s->reader));
 }
+
+/* Skips `skip` bytes, then returns the next `n` bytes of the stream:
+ * rds_extract(use_r = TRUE) reads an item's bytes this way. */
+SEXP zrd_source_bytes(SEXP ptr, SEXP skip, SEXP n)
+{
+    zrd_source *s = zrd_source_get(ptr);
+    size_t nskip = (size_t) Rf_asInteger(skip);
+    double want = Rf_asReal(n);
+    if (!(want >= 0) || want > R_XLEN_T_MAX) Rf_error("internal error: bad byte count");
+    if (zrd_reader_read(&s->reader, NULL, nskip) != nskip)
+        Rf_error("internal error: the input is shorter than its magic line");
+    SEXP out = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t) want));
+    size_t got = zrd_reader_read(&s->reader, RAW(out), (size_t) want);
+    if (got != (size_t) want) Rf_error("internal error: the input changed while read");
+    UNPROTECT(1);
+    return out;
+}
