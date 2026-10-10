@@ -30,6 +30,8 @@
 "deferred_string.rds","rds","deferred_string","xdr",3,"gzip","4.6.1","404ddcef353c3c3f719339c2e2effb3401a1e65f1022158bab84010c7ca4b39e"
 "s4.rds","rds","s4","xdr",3,"gzip","4.6.1","ee8e1b922d520d3b1824684da0259528fac3d708ce865066c10ccbbe211ddf51"
 "persistent.rds","rds","persistent","xdr",3,"gzip","4.6.1","367539dbd21c4e5f3abf2a43d1182d15b9f22c48dc55216b2148f7bc625b34e6"
+"cve_top.rds","rds","cve_top","xdr",3,"gzip","4.6.1","5594a3f67b2b4e0f77dad49b8eea8909d656614d466327496fca7939311a03a8"
+"cve_nested.rds","rds","cve_nested","xdr",3,"gzip","4.6.1","0dd35b10f3a3ad7bee3cdc7d30ad6ee7e4373e438846ab84a22ba49632f9ae27"
 "named_list-xdr-v2-none.rds","rds","named_list","xdr",2,"none","4.6.1","a10fc544d3180639ac6252133f4ba5d89bb991f9a0e1ba7cf2db3b324bda56db"
 "named_list-xdr-v2-gzip.rds","rds","named_list","xdr",2,"gzip","4.6.1","86ef08042fb33f46f3a106d0902d7c71fb44b4b5c8cd56f5f0873a3304c7ccaa"
 "named_list-xdr-v2-bzip2.rds","rds","named_list","xdr",2,"bzip2","4.6.1","0d35bc4800cac9879d039e09a13c6bebb722d3e2c9aae504adf1f8a2f30cadff"

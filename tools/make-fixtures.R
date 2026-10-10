@@ -139,6 +139,26 @@ local({
   add(f, "rds", "persistent", "xdr", 3L, "gzip")
 })
 
+# CVE-2024-27322-style files: an unforced promise whose code is a call to
+# system(), at the top level and nested in a list. R refuses to write a
+# promise, so the XDR stream is built by hand: a PROMSXP cell (5) with a
+# tag (+1024) for its environment (R_GlobalEnv, 253), its value unbound
+# (252), and its code, system("echo zurds"), as a LANGSXP.
+local({
+  int <- function(...) writeBin(as.integer(c(...)), raw(), endian = "big")
+  chars <- function(s) c(int(262153, nchar(s)), charToRaw(s)) # ASCII CHARSXP
+  call <- c(int(6, 1), chars("system"), int(2, 16, 1), chars("echo zurds"), int(254))
+  promise <- c(int(5 + 1024, 253, 252), call)
+  header <- c(charToRaw("X\n"), int(3, 263681, 197888, 5), charToRaw("UTF-8"))
+  nested <- c(int(19, 2, 14, 1), writeBin(1, raw(), endian = "big"), promise)
+  for (f in c("cve_top.rds", "cve_nested.rds")) {
+    con <- gzfile(file.path(out, f), "wb")
+    writeBin(c(header, if (f == "cve_top.rds") promise else nested), con)
+    close(con)
+    add(f, "rds", sub("[.]rds$", "", f), "xdr", 3L, "gzip")
+  }
+})
+
 # The matrix.
 for (nm in matrix_objects) for (fmt in formats) for (v in versions) for (comp in compressions) {
   f <- sprintf("%s-%s-v%d-%s.rds", nm, fmt, v, comp)
