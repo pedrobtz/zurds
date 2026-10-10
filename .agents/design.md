@@ -302,6 +302,14 @@ What `rds_read_data()` guarantees, and how it is checked:
 3. It refuses (or, non-strict, drops) every other type.
 4. All lengths and depths are checked against limits before allocation.
 
+How each is checked (Stage 7): `tools/check-symbols` fails if the shared
+object references `R_Unserialize`, `Rf_eval` or anything that reaches
+them, so guarantee 1 holds by construction on the C side; the tests trace
+`unserialize()`, `readRDS()` and `load()` while reading. Attributes are set
+with `Rf_setAttrib()`, so an attribute R rejects (a `dim` that does not
+match) is a parse error. A vector with the S4 bit is refused like an S4
+object.
+
 What it does **not** guarantee: that printing or using the result is
 safe if the user's own code later dispatches on a class from the file
 to a method they have loaded. That is the user's code, not the file's.
@@ -453,7 +461,8 @@ Reasons where they are not in the section cited:
    scan of that item only? Recommended: yes, behind `use_r = TRUE`, with
    the scan's findings attached to the result.
 2. **Data frames with list columns** of mixed types: build as lists (as
-   proposed) or refuse in strict mode? Recommended: build.
+   proposed) or refuse in strict mode? Recommended: build. **Settled
+   2026-10-10 (Stage 7): built as lists.**
 3. **`.RData` from very old R** (format version 2, `RDX2`): support fully
    in 0.1.0? Recommended: yes; R writes version 2 when asked. **Settled
    2026-10-10 (Stage 5): yes.** Every format of version 2 is walked, and

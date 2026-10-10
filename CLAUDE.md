@@ -21,9 +21,8 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stages 0 to 6, 2026-10-10: `zurds_info()`, `rds_info()`, `rds_str()`, `rds_toc()`, `rds_scan()`,
-`rds_is_safe()` and `rds_deps()`. The walk reads XDR, native binary and ASCII
-streams of every item kind R writes. Not yet: the builder, extraction and lazy-load databases. See the roadmap's
+Stages 0 to 7, 2026-10-10: every inspection and safety function and `rds_read_data()`. The walk reads XDR, native binary and ASCII
+streams of every item kind R writes. Not yet: extraction and lazy-load databases. See the roadmap's
 stage table for what is done.
 
 ## Stage tracking
