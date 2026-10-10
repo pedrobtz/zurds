@@ -33,7 +33,7 @@ Rules that hold for every stage:
 | 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 | 2026-10-10 | [#21](https://github.com/pedrobtz/zurds/pull/21) |
 | 5 | Table of contents for .rda files | M | #7 | 2026-10-10 | [#22](https://github.com/pedrobtz/zurds/pull/22) |
 | 6 | The scanner and rds_deps() | M | #8 | 2026-10-10 | [#23](https://github.com/pedrobtz/zurds/pull/23) |
-| 7 | The data-only builder and rds_read_data() | M | #9 | 2026-10-10 | |
+| 7 | The data-only builder and rds_read_data() | M | #9 | 2026-10-10 | [#24](https://github.com/pedrobtz/zurds/pull/24) |
 | 8 | Extraction | M | #10 | | |
 | 9 | Lazy-load databases | M | #11 | | |
 | 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | | |
