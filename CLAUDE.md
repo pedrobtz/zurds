@@ -25,10 +25,11 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 9, 2026-10-10: the whole v0.1.0 API (design section 5). The
-walk reads XDR, native binary and ASCII streams of every item kind R
-writes. Not yet: Stage 10’s hardening, Stage 11’s documentation and
-Stage 12. See the roadmap’s stage table for what is done.
+Stages 0 to 10, 2026-10-10: the whole v0.1.0 API (design section 5),
+with fuzzing, the hostile inputs, the drift check and the benchmarks.
+The walk reads XDR, native binary and ASCII streams of every item kind R
+writes. Not yet: Stage 11’s documentation and Stage 12. See the
+roadmap’s stage table for what is done.
 
 ## Stage tracking
 
@@ -63,6 +64,9 @@ Rscript tools/make-fixtures.R                    # rewrite tests/testthat/fixtur
 Rscript tools/make-fixtures.R --full DIR         # the full matrix, into DIR
 ZURDS_FIXTURES=DIR Rscript -e 'devtools::test()' # the suite against DIR
 tools/run-standalone [DIR]                       # the walk without R, sanitized
+tools/run-fuzz-canary [DIR]                      # fuzz target: seeds clean, canary crashes
+tools/check-drift [--canary]                     # serialize.c is a reviewed version
+tools/run-benchmarks [scale]                     # design section 15, slow at scale 1
 Rscript tools/alloc-exercise.R                   # what alloc-failure.yaml sweeps
 ```
 
@@ -144,6 +148,9 @@ built in `R/conditions.R` by `zrd_abort()`; the class chain lives in
   after each word, and `InString()`, which does not. The walk takes the
   trailing newline after the root item so a walk ends where the stream
   does.
+- `tools/drift/reviewed.txt` lists the `serialize.c` versions the walk
+  was reviewed against. Add a hash only after reading the diff; never to
+  make the drift check pass.
 - Gates need canaries: a new gate is trusted only once it has failed on
   a planted defect.
 
@@ -194,7 +201,10 @@ Calls `pedrobtz/r-actions` at `@v1`: `r-cmd-check.yml` (R-CMD-check),
 `cran-special.yml`. `gates.yaml` runs `tools/check-symbols` and its
 canary, and `tools/run-standalone` over the full fixture matrix.
 `arch.yaml` (32-bit, musl) and `alloc-failure.yaml` (fails each
-allocation of `tools/alloc-exercise.R`) run weekly. `fixtures.yaml`
+allocation of `tools/alloc-exercise.R`) run weekly. `fuzz.yaml` runs
+libFuzzer on `tools/fuzz/harness.c` (the walk, the scanner, payload
+decoding and the zlib decoder; 2 minutes per pull request, 30 nightly),
+and `drift.yaml` checks `serialize.c` weekly. `fixtures.yaml`
 regenerates the fixtures on oldrel, release and devel, checks the
 checked-in manifest, and runs the suite on the full matrix.
 

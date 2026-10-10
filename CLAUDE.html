@@ -43,7 +43,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Stages 0 to 9, 2026-10-10: the whole v0.1.0 API (design section 5). The walk reads XDR, native binary and ASCII streams of every item kind R writes. Not yet: Stage 10’s hardening, Stage 11’s documentation and Stage 12. See the roadmap’s stage table for what is done.</p>
+<p>Stages 0 to 10, 2026-10-10: the whole v0.1.0 API (design section 5), with fuzzing, the hostile inputs, the drift check and the benchmarks. The walk reads XDR, native binary and ASCII streams of every item kind R writes. Not yet: Stage 11’s documentation and Stage 12. See the roadmap’s stage table for what is done.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-tracking">Stage tracking<a class="anchor" aria-label="anchor" href="#stage-tracking"></a></h2>
@@ -71,7 +71,10 @@
 <span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="ex">Rscript</span> tools/make-fixtures.R <span class="at">--full</span> DIR         <span class="co"># the full matrix, into DIR</span></span>
 <span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="va">ZURDS_FIXTURES</span><span class="op">=</span>DIR <span class="ex">Rscript</span> <span class="at">-e</span> <span class="st">'devtools::test()'</span> <span class="co"># the suite against DIR</span></span>
 <span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="ex">tools/run-standalone</span> <span class="pp">[</span><span class="ss">DIR</span><span class="pp">]</span>                       <span class="co"># the walk without R, sanitized</span></span>
-<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="ex">Rscript</span> tools/alloc-exercise.R                   <span class="co"># what alloc-failure.yaml sweeps</span></span></code></pre></div>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a><span class="ex">tools/run-fuzz-canary</span> <span class="pp">[</span><span class="ss">DIR</span><span class="pp">]</span>                      <span class="co"># fuzz target: seeds clean, canary crashes</span></span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a><span class="ex">tools/check-drift</span> <span class="pp">[--</span><span class="ss">canary</span><span class="pp">]</span>                     <span class="co"># serialize.c is a reviewed version</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a><span class="ex">tools/run-benchmarks</span> <span class="pp">[</span><span class="ss">scale</span><span class="pp">]</span>                     <span class="co"># design section 15, slow at scale 1</span></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="ex">Rscript</span> tools/alloc-exercise.R                   <span class="co"># what alloc-failure.yaml sweeps</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="architecture">Architecture<a class="anchor" aria-label="anchor" href="#architecture"></a></h2>
@@ -91,6 +94,8 @@
 <li>Native routine names are R objects in the namespace (<code>useDynLib</code> with <code>.registration = TRUE</code>). An R function with the same name as a <code>.Call</code> routine shadows it; the R wrappers use different names (<code>zrd_walk_info()</code> calls <code>zrd_walk_stats</code>).</li>
 <li>Exported functions pass <code><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">sys.call()</a></code> as <code>call</code> to the helpers; internal helpers default <code>call = NULL</code>. Never pass an environment: it becomes the condition’s call and prints as “Error in <code>&lt;environment&gt;</code>”.</li>
 <li>ASCII mirrors R’s <code>InWord()</code>, which consumes the white-space character after each word, and <code>InString()</code>, which does not. The walk takes the trailing newline after the root item so a walk ends where the stream does.</li>
+<li>
+<code>tools/drift/reviewed.txt</code> lists the <code>serialize.c</code> versions the walk was reviewed against. Add a hash only after reading the diff; never to make the drift check pass.</li>
 <li>Gates need canaries: a new gate is trusted only once it has failed on a planted defect.</li>
 </ul></div>
 <div class="section level2">
@@ -120,7 +125,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="continuous-integration">Continuous integration<a class="anchor" aria-label="anchor" href="#continuous-integration"></a></h2>
-<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code> (with <code>github-packages: pedrobtz/zufast</code>), <code>analyzers.yml</code>, <code>cran-special.yml</code>. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary, and <code>tools/run-standalone</code> over the full fixture matrix. <code>arch.yaml</code> (32-bit, musl) and <code>alloc-failure.yaml</code> (fails each allocation of <code>tools/alloc-exercise.R</code>) run weekly. <code>fixtures.yaml</code> regenerates the fixtures on oldrel, release and devel, checks the checked-in manifest, and runs the suite on the full matrix.</p>
+<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code> (with <code>github-packages: pedrobtz/zufast</code>), <code>analyzers.yml</code>, <code>cran-special.yml</code>. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary, and <code>tools/run-standalone</code> over the full fixture matrix. <code>arch.yaml</code> (32-bit, musl) and <code>alloc-failure.yaml</code> (fails each allocation of <code>tools/alloc-exercise.R</code>) run weekly. <code>fuzz.yaml</code> runs libFuzzer on <code>tools/fuzz/harness.c</code> (the walk, the scanner, payload decoding and the zlib decoder; 2 minutes per pull request, 30 nightly), and <code>drift.yaml</code> checks <code>serialize.c</code> weekly. <code>fixtures.yaml</code> regenerates the fixtures on oldrel, release and devel, checks the checked-in manifest, and runs the suite on the full matrix.</p>
 </div>
 <div class="section level2">
 <h2 id="commits-and-pull-requests">Commits and pull requests<a class="anchor" aria-label="anchor" href="#commits-and-pull-requests"></a></h2>
