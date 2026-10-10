@@ -21,9 +21,8 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stages 0 to 8, 2026-10-10: every inspection and safety function, `rds_read_data()` and
-`rds_extract()`. The walk reads XDR, native binary and ASCII
-streams of every item kind R writes. Not yet: lazy-load databases. See the roadmap's
+Stages 0 to 9, 2026-10-10: the whole v0.1.0 API (design section 5). The walk reads XDR, native binary and ASCII
+streams of every item kind R writes. Not yet: Stage 10's hardening, Stage 11's documentation and Stage 12. See the roadmap's
 stage table for what is done.
 
 ## Stage tracking
@@ -107,6 +106,9 @@ R objects are made from stream content. R-side conditions are built in
   output, and turns codec warnings into `zurds_decompression_error`. Read
   source bytes only through `zrd_source_call()`, or a codec warning
   escapes as a plain warning.
+- Lazy-load zlib entries go through `src/zrd_inflate.c`, never
+  `memDecompress()`; xz entries are raw LZMA2 and must be wrapped by
+  `zrd_xz_wrap` first (design section 7).
 - Never decompress input with `memDecompress()`: with zlib (Linux R
   without libdeflate) it doubles its buffer forever on truncated gzip, and
   the process is killed. Compressed raw vectors go through a temporary file

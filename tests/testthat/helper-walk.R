@@ -93,5 +93,6 @@ buildable_fixture_objects <- setdiff(buildable_fixture_objects, c("pairlist", "s
 # The formula fixture is not one: it keeps the environment it was made in.
 clean_fixture_objects <- c(
   data_fixture_objects, "compact_seq", "deferred_string", "language",
-  "builtin", "special"
+  "builtin", "special", "zlib"
 )
+
