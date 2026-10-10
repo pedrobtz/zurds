@@ -82,13 +82,13 @@ zrd_findings_frame <- function(f) {
 #' @family safety
 #' @export
 #' @examples
-#' f <- tempfile(fileext = ".rds")
-#' saveRDS(list(data = mtcars, model = lm(mpg ~ wt, mtcars)), f)
-#' head(rds_scan(f))
-#' rds_is_safe(f)
+#' rds_scan(system.file("extdata", "model.rds", package = "zurds"))
+#' rds_is_safe(system.file("extdata", "iris.rds", package = "zurds"))
 #'
-#' saveRDS(mtcars, f)
-#' rds_is_safe(f)
+#' # A promise that would run system() when used:
+#' promise <- system.file("extdata", "promise.rds", package = "zurds")
+#' rds_scan(promise)
+#' rds_is_safe(promise)
 rds_scan <- function(x, kind = NULL) {
   call <- sys.call()
   zrd_findings_frame(zrd_scan_raw(x, kind, call))
@@ -116,9 +116,10 @@ rds_is_safe <- function(x, kind = NULL) {
 #' @family safety
 #' @export
 #' @examples
-#' f <- tempfile(fileext = ".rds")
-#' saveRDS(list(sd = stats::sd, x = 1:3), f)
-#' rds_deps(f)
+#' rds_deps(system.file("extdata", "model.rds", package = "zurds"))
+#'
+#' # An object from a namespace needs that package:
+#' rds_deps(serialize(stats::sd, NULL))
 rds_deps <- function(x, kind = NULL) {
   call <- sys.call()
   f <- zrd_scan_raw(x, kind, call)

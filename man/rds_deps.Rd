@@ -30,9 +30,10 @@ and package environments it refers to, the packages of its ALTREP
 classes, and the packages of its S4 classes. The file is not loaded.
 }
 \examples{
-f <- tempfile(fileext = ".rds")
-saveRDS(list(sd = stats::sd, x = 1:3), f)
-rds_deps(f)
+rds_deps(system.file("extdata", "model.rds", package = "zurds"))
+
+# An object from a namespace needs that package:
+rds_deps(serialize(stats::sd, NULL))
 }
 \seealso{
 Other safety:

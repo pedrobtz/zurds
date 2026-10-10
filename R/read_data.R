@@ -44,13 +44,13 @@ zrd_session_encoding <- function() {
 #' @family reading
 #' @export
 #' @examples
-#' f <- tempfile(fileext = ".rds")
-#' saveRDS(head(mtcars), f)
+#' f <- system.file("extdata", "iris.rds", package = "zurds")
 #' identical(rds_read_data(f), readRDS(f))
 #'
-#' saveRDS(list(x = 1:3, f = function() "hello"), f)
-#' try(rds_read_data(f))
-#' rds_read_data(f, strict = FALSE)
+#' # A file holding code is refused, or read with the code dropped:
+#' promise <- system.file("extdata", "promise.rds", package = "zurds")
+#' try(rds_read_data(promise))
+#' rds_read_data(promise, strict = FALSE)
 rds_read_data <- function(x, strict = TRUE, kind = NULL) {
   call <- sys.call()
   if (!is.logical(strict) || length(strict) != 1L || is.na(strict)) {

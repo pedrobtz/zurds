@@ -35,15 +35,12 @@ list. Closures, environments, promises and other items that could run
 code or reach outside the file are named, never followed.
 }
 \examples{
-f <- tempfile(fileext = ".rds")
-saveRDS(list(id = 1:3, fit = list(coef = c(a = 1, b = 2)), when = Sys.Date()), f)
-rds_str(f)
+rds_str(system.file("extdata", "model.rds", package = "zurds"))
 
-g <- tempfile(fileext = ".rda")
-x <- letters
-y <- iris
-save(x, y, file = g)
-rds_str(g, max_level = 1)
+rds_str(system.file("extdata", "objects.rda", package = "zurds"), max_level = 1)
+
+# A file R refuses to load can still be summarised:
+rds_str(system.file("extdata", "promise.rds", package = "zurds"))
 }
 \seealso{
 Other inspection:

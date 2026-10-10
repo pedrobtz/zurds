@@ -113,8 +113,12 @@ zrd_lazyload_entry <- function(db, key, name, call) {
 #' @family lazy-load
 #' @export
 #' @examples
-#' db <- file.path(system.file("R", package = "stats"), "stats")
-#' head(rds_lazyload_toc(db))
+#' db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+#' rds_lazyload_toc(db)
+#'
+#' # An installed package's own database:
+#' stats <- file.path(system.file("R", package = "stats"), "stats")
+#' head(rds_lazyload_toc(stats))
 rds_lazyload_toc <- function(path) {
   call <- sys.call()
   db <- zrd_lazyload_open(path, call)
@@ -158,10 +162,9 @@ rds_lazyload_toc <- function(path) {
 #' @family lazy-load
 #' @export
 #' @examples
-#' db <- file.path(system.file("R", package = "stats"), "stats")
-#' toc <- rds_lazyload_toc(db)
-#' data_only <- toc$name[!toc$risky & toc$type %in% c("character", "list")]
-#' if (length(data_only)) str(rds_lazyload_extract(db, data_only[1]))
+#' db <- file.path(system.file("extdata", package = "zurds"), "lazy")
+#' rds_lazyload_extract(db, "table")
+#' try(rds_lazyload_extract(db, "helper"))
 rds_lazyload_extract <- function(path, name) {
   call <- sys.call()
   if (!is.character(name) || length(name) != 1L || is.na(name)) {
@@ -174,5 +177,12 @@ rds_lazyload_extract <- function(path, name) {
               what = name, call = call)
   }
   stream <- zrd_lazyload_entry(db, key, name, call)
-  rds_read_data(stream, kind = "rds")
+  # Errors name this call, not the reader underneath.
+  tryCatch(
+    rds_read_data(stream, kind = "rds"),
+    zurds_error = function(e) {
+      e$call <- call
+      stop(e)
+    }
+  )
 }

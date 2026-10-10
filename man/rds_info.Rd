@@ -38,11 +38,13 @@ Reads the header of a file written by \code{saveRDS()}, \code{save()} or
 object it holds.
 }
 \examples{
-f <- tempfile(fileext = ".rds")
-saveRDS(mtcars, f)
+f <- system.file("extdata", "model.rds", package = "zurds")
 rds_info(f)
 
-rds_info(serialize(1:3, NULL, version = 2))
+rds_info(system.file("extdata", "objects.rda", package = "zurds"))
+
+# A serialize() result, written by R in ASCII format version 2:
+rds_info(serialize(1:3, NULL, ascii = TRUE, version = 2))
 }
 \seealso{
 Other inspection:

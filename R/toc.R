@@ -61,12 +61,7 @@ zrd_cache_key <- function(input) {
 #' @family inspection
 #' @export
 #' @examples
-#' f <- tempfile(fileext = ".rda")
-#' x <- 1:10
-#' cars <- mtcars
-#' m <- matrix(0, 3, 4)
-#' save(x, cars, m, file = f)
-#' rds_toc(f)
+#' rds_toc(system.file("extdata", "objects.rda", package = "zurds"))
 rds_toc <- function(x, kind = NULL) {
   call <- sys.call()
   input <- zrd_open(x, kind, call)
