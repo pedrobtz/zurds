@@ -25,14 +25,18 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 5, 2026-10-10:
+Stages 0 to 6, 2026-10-10:
 [`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md),
 [`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md),
-[`rds_str()`](https://pedrobtz.github.io/zurds/reference/rds_str.md) and
-[`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md).
+[`rds_str()`](https://pedrobtz.github.io/zurds/reference/rds_str.md),
+[`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md),
+[`rds_scan()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md),
+[`rds_is_safe()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
+and
+[`rds_deps()`](https://pedrobtz.github.io/zurds/reference/rds_deps.md).
 The walk reads XDR, native binary and ASCII streams of every item kind R
-writes. Not yet: the scanner, the builder, extraction and lazy-load
-databases. See the roadmap’s stage table for what is done.
+writes. Not yet: the builder, extraction and lazy-load databases. See
+the roadmap’s stage table for what is done.
 
 ## Stage tracking
 

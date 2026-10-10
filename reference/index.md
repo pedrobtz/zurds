@@ -2,8 +2,13 @@
 
 ## All functions
 
+- [`rds_deps()`](https://pedrobtz.github.io/zurds/reference/rds_deps.md)
+  : Packages a file needs
 - [`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md)
   : Header of an R serialization file
+- [`rds_scan()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
+  [`rds_is_safe()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
+  : Scan an R serialization file for code and references
 - [`rds_str()`](https://pedrobtz.github.io/zurds/reference/rds_str.md) :
   Structure of an R serialization file
 - [`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md) :

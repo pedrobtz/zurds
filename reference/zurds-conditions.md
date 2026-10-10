@@ -23,7 +23,9 @@ class below inherits from `zurds_error`.
 - `zurds_unsafe_content`:
 
   The file holds something the data-only reader refuses. Carries
-  `findings`, as `rds_scan()` would report them.
+  `findings`, as
+  [`rds_scan()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
+  would report them.
 
 - `zurds_not_found`:
 

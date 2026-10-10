@@ -48,7 +48,9 @@ A data frame with one row per object, in the order
 - `offset`: where it starts in the decompressed file, in bytes.
 
 - `risky`: whether it holds anything that can run code or reach outside
-  the file. `NA` until the scanner is implemented.
+  the file: a finding of
+  [`rds_scan()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
+  of severity `"executes"` or `"reaches_out"`.
 
 ## See also
 
@@ -66,7 +68,7 @@ m <- matrix(0, 3, 4)
 save(x, cars, m, file = f)
 rds_toc(f)
 #>   name    type      class length     dim size offset risky
-#> 1    x integer       <NA>     10    <NA>  110     45    NA
-#> 2 cars    list data.frame     11 32 x 11 3784    175    NA
-#> 3    m  double       <NA>     12   3 x 4  143   3976    NA
+#> 1    x integer       <NA>     10    <NA>  110     45 FALSE
+#> 2 cars    list data.frame     11 32 x 11 3784    175 FALSE
+#> 3    m  double       <NA>     12   3 x 4  143   3976 FALSE
 ```
