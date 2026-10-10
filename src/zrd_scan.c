@@ -29,6 +29,7 @@ int zrd_scan_init(zrd_scan *s, const zrd_walk *w, int max_depth)
     s->attr_name = calloc(n, 1);
     if (!s->type || !s->finding || !s->info_owner || !s->in_attr || !s->attr_name)
         return 1;
+    for (size_t i = 0; i < n; i++) s->finding[i] = s->info_owner[i] = -1;
     return 0;
 }
 
