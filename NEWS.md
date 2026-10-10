@@ -18,3 +18,5 @@
   The result is `identical()` to `readRDS()`.
 * `rds_extract()` reads one object, list element or data frame column
   without building the rest; `use_r = TRUE` hands only that item to R.
+* `rds_lazyload_toc()` and `rds_lazyload_extract()` list and read lazy-load
+  databases, such as an installed package's, without forcing promises.

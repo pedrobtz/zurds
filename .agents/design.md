@@ -290,6 +290,13 @@ walker, lists the variables, and extracts one through the data builder.
 It does not evaluate the promise that `lazyLoadDBfetch()` would evaluate:
 a top-level promise in an `.rdb` entry is reported, not forced.
 
+**Stage 9.** An entry's declared length is checked against the building
+limit before `memDecompress()` runs, and the result must have that length
+(a truncated xz entry decompresses to a prefix without an error). On R
+releases before the fix in `connections.c` (present at a97c000), zlib's
+`memDecompress()` path could grow its buffer without bound on a truncated
+entry; a lazy-load database is read as trusted as the R that wrote it.
+
 ## 8. Safety model
 
 What `rds_read_data()` guarantees, and how it is checked:
