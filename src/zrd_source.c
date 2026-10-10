@@ -8,6 +8,7 @@
 #include <string.h>
 
 #include "zrd.h"
+#include "zrd_inflate.h"
 #include "zrd_source.h"
 
 #if !defined(R_CONNECTIONS_VERSION) || R_CONNECTIONS_VERSION != 1
@@ -30,7 +31,12 @@ static void source_finalizer(SEXP ptr)
 static size_t conn_fill(void *ctx, uint8_t *buf, size_t cap)
 {
     zrd_source *s = ctx;
-    return R_ReadConnection(s->con, buf, cap);
+    size_t got = R_ReadConnection(s->con, buf, cap);
+    /* gzfile() reports a corrupt stream as (size_t) -1 after warning
+     * (connections.c, gzfile_read); zrd_source_call() turns the warning
+     * into an error first, and this catches it if a handler did not. */
+    if (got > cap) Rf_error("the connection reported a read error");
+    return got;
 }
 
 zrd_source *zrd_source_get(SEXP ptr)
@@ -99,4 +105,34 @@ SEXP zrd_source_bytes(SEXP ptr, SEXP skip, SEXP n)
     if (got != (size_t) want) Rf_error("internal error: the input changed while read");
     UNPROTECT(1);
     return out;
+}
+
+/* Decompresses a lazy-load entry's zlib stream `in` into the `n` bytes it
+ * declares (zrd_inflate.c); a status message instead on failure. */
+SEXP zrd_inflate_raw(SEXP in, SEXP n)
+{
+    double want = Rf_asReal(n);
+    if (TYPEOF(in) != RAWSXP || !(want >= 0) || want > R_XLEN_T_MAX)
+        Rf_error("internal error: bad inflate arguments");
+    SEXP out = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t) want));
+    size_t produced;
+    zrd_inflate_status st = zrd_inflate_zlib(RAW(in), (size_t) XLENGTH(in), RAW(out),
+                                             (size_t) want, &produced);
+    SEXP res = st == ZRD_INFLATE_OK ? out : Rf_mkString(zrd_inflate_message(st));
+    UNPROTECT(1);
+    return res;
+}
+
+/* An xz lazy-load entry's raw LZMA2 data `in`, of `n` bytes uncompressed,
+ * in an .xz container for memDecompress() (zrd_inflate.c). */
+SEXP zrd_xz_wrap(SEXP in, SEXP n)
+{
+    double want = Rf_asReal(n);
+    if (TYPEOF(in) != RAWSXP || !(want >= 0)) Rf_error("internal error: bad xz arguments");
+    size_t len = (size_t) XLENGTH(in);
+    SEXP out = PROTECT(Rf_allocVector(RAWSXP, (R_xlen_t) zrd_xz_container_size(len)));
+    size_t used = zrd_xz_container(RAW(in), len, (uint64_t) want, RAW(out));
+    SEXP res = Rf_lengthgets(out, (R_xlen_t) used);
+    UNPROTECT(1);
+    return res;
 }
