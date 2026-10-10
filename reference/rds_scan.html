@@ -91,7 +91,7 @@ external pointers, weak and persistent references) or
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Base R's own ALTREP classes (compact sequences such as <code>1:10</code>, deferred
 strings and wrappers) need no package and are read by
-<code>rds_read_data()</code>; they are not findings.</p>
+<code><a href="rds_read_data.html">rds_read_data()</a></code>; they are not findings.</p>
 <p>The scan is advisory for <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>: a clean scan means the file
 holds no type that can run code when it is loaded, but <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>
 still creates objects of the file's classes, and using them can call

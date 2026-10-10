@@ -27,3 +27,9 @@
   lists the packages a file needs.
   [`rds_toc()`](https://pedrobtz.github.io/zurds/reference/rds_toc.md)
   fills `risky`.
+- [`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md)
+  reads data-only files with a reader written in C that builds only
+  vectors, lists and attributes, and never calls
+  [`unserialize()`](https://rdrr.io/r/base/serialize.html). The result
+  is [`identical()`](https://rdrr.io/r/base/identical.html) to
+  [`readRDS()`](https://rdrr.io/r/base/readRDS.html).

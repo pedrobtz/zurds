@@ -6,6 +6,8 @@
   : Packages a file needs
 - [`rds_info()`](https://pedrobtz.github.io/zurds/reference/rds_info.md)
   : Header of an R serialization file
+- [`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md)
+  : Read a data-only R serialization file safely
 - [`rds_scan()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
   [`rds_is_safe()`](https://pedrobtz.github.io/zurds/reference/rds_scan.md)
   : Scan an R serialization file for code and references

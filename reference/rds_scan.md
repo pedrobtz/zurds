@@ -57,7 +57,8 @@ For `rds_is_safe()`, `TRUE` when `rds_scan()` finds nothing.
 ## Details
 
 Base R's own ALTREP classes (compact sequences such as `1:10`, deferred
-strings and wrappers) need no package and are read by `rds_read_data()`;
+strings and wrappers) need no package and are read by
+[`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md);
 they are not findings.
 
 The scan is advisory for
