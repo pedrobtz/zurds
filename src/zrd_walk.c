@@ -57,6 +57,8 @@ struct zrd_frame {
     int64_t reps;          /* BCODESXP: ReadBC's reps vector length */
     int bcl_attr;          /* FK_BCLANG: an ATTRLANGSXP or ATTRLISTSXP */
     int ref_symbol;        /* a REFSXP to a symbol, named name_off/len */
+    int64_t ref;           /* a REFSXP: its index and what it refers to, */
+    int ref_type;          /* for its END event as for its BEGIN */
     int32_t ints[ZRD_INT_CAP]; /* a short INTSXP or LGLSXP's values */
     int nints;
     double reals[ZRD_INT_CAP]; /* a short REALSXP's values */
@@ -635,6 +637,8 @@ static zrd_status begin(zrd_walk *w, int32_t flags, uint64_t offset,
             return fail(w, ZRD_ERR_BAD_REF, "reference index out of range");
         ref = i;
         ref_type = w->refs[i - 1].type;
+        f->ref = ref;
+        f->ref_type = ref_type;
         if (ref_type == ZRD_SYMSXP) {
             f->ref_symbol = 1;
             f->name_off = w->refs[i - 1].name_off;
@@ -875,7 +879,7 @@ static zrd_status end(zrd_walk *w, uint64_t end_offset)
             parent->name_len = f->has_name ? f->name_len : 0;
         }
     }
-    st = emit_at(w, ZRD_EVENT_END, f, w->depth - 1, parent, 0, 0, end_offset);
+    st = emit_at(w, ZRD_EVENT_END, f, w->depth - 1, parent, f->ref, f->ref_type, end_offset);
     w->depth--;
     return st;
 }
