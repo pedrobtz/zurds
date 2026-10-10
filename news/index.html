@@ -48,6 +48,8 @@
 <code><a href="../reference/rds_read_data.html">rds_read_data()</a></code> reads data-only files with a reader written in C that builds only vectors, lists and attributes, and never calls <code><a href="https://rdrr.io/r/base/serialize.html" class="external-link">unserialize()</a></code>. The result is <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> to <code><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS()</a></code>.</li>
 <li>
 <code><a href="../reference/rds_extract.html">rds_extract()</a></code> reads one object, list element or data frame column without building the rest; <code>use_r = TRUE</code> hands only that item to R.</li>
+<li>
+<code><a href="../reference/rds_lazyload_toc.html">rds_lazyload_toc()</a></code> and <code><a href="../reference/rds_lazyload_extract.html">rds_lazyload_extract()</a></code> list and read lazy-load databases, such as an installed package’s, without forcing promises.</li>
 </ul></div>
   </main></div>
 

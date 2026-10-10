@@ -36,3 +36,8 @@
 - [`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md)
   reads one object, list element or data frame column without building
   the rest; `use_r = TRUE` hands only that item to R.
+- [`rds_lazyload_toc()`](https://pedrobtz.github.io/zurds/reference/rds_lazyload_toc.md)
+  and
+  [`rds_lazyload_extract()`](https://pedrobtz.github.io/zurds/reference/rds_lazyload_extract.md)
+  list and read lazy-load databases, such as an installed package’s,
+  without forcing promises.

@@ -43,7 +43,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Stages 0 to 8, 2026-10-10: every inspection and safety function, <code><a href="reference/rds_read_data.html">rds_read_data()</a></code> and <code><a href="reference/rds_extract.html">rds_extract()</a></code>. The walk reads XDR, native binary and ASCII streams of every item kind R writes. Not yet: lazy-load databases. See the roadmap’s stage table for what is done.</p>
+<p>Stages 0 to 9, 2026-10-10: the whole v0.1.0 API (design section 5). The walk reads XDR, native binary and ASCII streams of every item kind R writes. Not yet: Stage 10’s hardening, Stage 11’s documentation and Stage 12. See the roadmap’s stage table for what is done.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-tracking">Stage tracking<a class="anchor" aria-label="anchor" href="#stage-tracking"></a></h2>
@@ -85,6 +85,7 @@
 <li>Limits are checked before a length from the file is trusted, never after.</li>
 <li>An unknown pseudo-type is a parse error, never a skip.</li>
 <li>R’s codecs do not fail loudly on truncated input: through <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile()</a></code>, gzip reads short, bzip2 and zstd read nothing, and xz warns. <code>R/source.R</code> checks the gzip trailer’s ISIZE, the xz footer and empty output, and turns codec warnings into <code>zurds_decompression_error</code>. Read source bytes only through <code>zrd_source_call()</code>, or a codec warning escapes as a plain warning.</li>
+<li>Lazy-load zlib entries go through <code>src/zrd_inflate.c</code>, never <code><a href="https://rdrr.io/r/base/memCompress.html" class="external-link">memDecompress()</a></code>; xz entries are raw LZMA2 and must be wrapped by <code>zrd_xz_wrap</code> first (design section 7).</li>
 <li>Never decompress input with <code><a href="https://rdrr.io/r/base/memCompress.html" class="external-link">memDecompress()</a></code>: with zlib (Linux R without libdeflate) it doubles its buffer forever on truncated gzip, and the process is killed. Compressed raw vectors go through a temporary file and <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">gzfile()</a></code> instead.</li>
 <li>Every walk rule cites the <code>serialize.c</code> function it mirrors (commit <code>a97c000</code>). Keep the citation when changing a rule; Stage 10’s drift check depends on it.</li>
 <li>Native routine names are R objects in the namespace (<code>useDynLib</code> with <code>.registration = TRUE</code>). An R function with the same name as a <code>.Call</code> routine shadows it; the R wrappers use different names (<code>zrd_walk_info()</code> calls <code>zrd_walk_stats</code>).</li>

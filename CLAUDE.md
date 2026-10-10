@@ -25,13 +25,10 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 8, 2026-10-10: every inspection and safety function,
-[`rds_read_data()`](https://pedrobtz.github.io/zurds/reference/rds_read_data.md)
-and
-[`rds_extract()`](https://pedrobtz.github.io/zurds/reference/rds_extract.md).
-The walk reads XDR, native binary and ASCII streams of every item kind R
-writes. Not yet: lazy-load databases. See the roadmap’s stage table for
-what is done.
+Stages 0 to 9, 2026-10-10: the whole v0.1.0 API (design section 5). The
+walk reads XDR, native binary and ASCII streams of every item kind R
+writes. Not yet: Stage 10’s hardening, Stage 11’s documentation and
+Stage 12. See the roadmap’s stage table for what is done.
 
 ## Stage tracking
 
@@ -121,6 +118,10 @@ built in `R/conditions.R` by `zrd_abort()`; the class chain lives in
   codec warnings into `zurds_decompression_error`. Read source bytes
   only through `zrd_source_call()`, or a codec warning escapes as a
   plain warning.
+- Lazy-load zlib entries go through `src/zrd_inflate.c`, never
+  [`memDecompress()`](https://rdrr.io/r/base/memCompress.html); xz
+  entries are raw LZMA2 and must be wrapped by `zrd_xz_wrap` first
+  (design section 7).
 - Never decompress input with
   [`memDecompress()`](https://rdrr.io/r/base/memCompress.html): with
   zlib (Linux R without libdeflate) it doubles its buffer forever on
