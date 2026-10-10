@@ -1,0 +1,31 @@
+# R drift check (design section 14; roadmap Stage 10): R's serialize.c on
+# R-devel and on the newest release branch must be a version the walk has
+# been reviewed against (tools/drift/reviewed.txt). Weekly, so a change in
+# R is caught in the release cycle it lands in, and on any pull request
+# that touches the check. The canary runs first: a modified serialize.c
+# must fail.
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  pull_request:
+    paths:
+      - "tools/check-drift"
+      - "tools/drift/**"
+      - ".github/workflows/drift.yaml"
+      - "src/zrd_walk.c"
+  workflow_dispatch:
+
+name: drift
+
+permissions: read-all
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    name: serialize.c drift
+    steps:
+      - uses: actions/checkout@v4
+      - name: The check rejects its canary
+        run: tools/check-drift --canary
+      - name: R-devel and the newest release are reviewed versions
+        run: tools/check-drift

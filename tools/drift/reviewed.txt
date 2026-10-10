@@ -1,0 +1,9 @@
+# SHA-256 of R's src/main/serialize.c in each version the walk has been
+# reviewed against (design section 14). tools/check-drift fails on any other.
+# When it does: read the diff against the last reviewed version, change the
+# walk where the grammar changed (src/zrd_walk.c cites the function each rule
+# mirrors), and add the new hash here with the date and what was reviewed.
+#
+# hash  source  reviewed  note
+cbc1eee198fdbab47b3d591d629cc18bb70d171424b8187f9a4ff51824cae69c  trunk@a97c000  2026-10-09  the version the walk mirrors (design, Source)
+1aca33e57dcd803b7f1327a7997c1c60762037bcc80b192cabe38c6ea880faf2  R-4-6-branch  2026-10-10  differs from a97c000 only in iconv cleanup on error, error messages and the lazy-load file cache; no change to the item grammar
