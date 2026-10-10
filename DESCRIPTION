@@ -1,14 +1,32 @@
 Package: zurds
-Title: What the Package Does (One Line, Title Case)
+Title: Inspect and Safely Read R Serialization Files
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
-Description: What the package does (one paragraph).
+    person("Pedro", "Baltazar", , "pedrobtz@gmail.com",
+           role = c("aut", "cre", "cph"))
+Description: Reads the files R writes with saveRDS(), save() and
+    serialize(), and lazy-load databases, without handing them to R's
+    deserializer. It reports a file's header, lists the objects in an
+    '.rda' file, summarises the structure of any stream, extracts a single
+    object or list element, and scans for everything that can run code or
+    reach outside the file, such as promises, closures and environments.
+    Data-only files can be read with a reader written in C that builds
+    only vectors, lists and attributes and never evaluates code from the
+    file.
 License: MIT + file LICENSE
-Encoding: UTF-8
-Roxygen: list(markdown = TRUE)
-RoxygenNote: 8.1.0
+URL: https://github.com/pedrobtz/zurds, https://pedrobtz.github.io/zurds/
+BugReports: https://github.com/pedrobtz/zurds/issues
+Depends: 
+    R (>= 4.1)
+LinkingTo: 
+    zufast (>= 0.1.0)
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    withr
+Remotes: 
+    pedrobtz/zufast
 Config/testthat/edition: 3
-URL: https://pedrobtz.github.io/zurds/
+Encoding: UTF-8
+Language: en-GB
+Roxygen: list(markdown = TRUE)
+Config/roxygen2/version: 8.1.0
