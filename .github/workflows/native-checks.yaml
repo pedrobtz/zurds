@@ -43,11 +43,15 @@ jobs:
       step: 100
       profile: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-ci') && 'quick' || 'full' }}
 
-  # zufast is LinkingTo-only and not on CRAN, which is all the rchk image
-  # installs from. Drop github-packages once it is (roadmap Stage 12).
+  # Blocking: the C is the package's own, and rchk's one finding so far (an
+  # unprotected vector in zrd_extract_patch, Stage 8) was a real bug that
+  # gctorture then hit. zufast is LinkingTo-only and not on CRAN, which is
+  # all the rchk image installs from; drop github-packages once it is
+  # (roadmap Stage 12).
   rchk:
     uses: pedrobtz/r-actions/.github/workflows/rchk.yml@v1
     with:
+      fail-on-findings: true
       github-packages: |
         pedrobtz/zufast
 
