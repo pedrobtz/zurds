@@ -10,6 +10,8 @@ OBJECTS = \
 	init.o \
 	zrd_info.o \
 	zrd_reader.o \
+	zrd_scan.o \
+	zrd_scan_r.o \
 	zrd_source.o \
 	zrd_toc.o \
 	zrd_trace.o \

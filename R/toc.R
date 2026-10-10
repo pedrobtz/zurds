@@ -56,7 +56,8 @@ zrd_cache_key <- function(input) {
 #'   * `size`: the bytes it takes in the decompressed stream.
 #'   * `offset`: where it starts in the decompressed file, in bytes.
 #'   * `risky`: whether it holds anything that can run code or reach
-#'     outside the file. `NA` until the scanner is implemented.
+#'     outside the file: a finding of [rds_scan()] of severity
+#'     `"executes"` or `"reaches_out"`.
 #' @family inspection
 #' @export
 #' @examples
@@ -120,6 +121,6 @@ zrd_toc_frame <- function(o, skip) {
   data.frame(
     name = o$name, type = type, class = o$class, length = length,
     dim = dim, size = o$end - o$offset, offset = o$offset + skip,
-    risky = NA, stringsAsFactors = FALSE
+    risky = o$risky, stringsAsFactors = FALSE
   )
 }

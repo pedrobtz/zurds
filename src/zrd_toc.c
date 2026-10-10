@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "zrd.h"
+#include "zrd_scan.h"
 #include "zrd_source.h"
 #include "zrd_walk.h"
 
@@ -29,12 +30,15 @@ typedef struct {
     size_t altrep_len;
     double altrep_n;       /* its length, from its state; -1 unknown */
     int64_t cells;         /* a pairlist-family object's cells */
+    size_t risky_before;   /* the scanner's risky count when it began */
+    int risky;
 } zrd_obj;
 
 typedef enum { ATTR_NONE = 0, ATTR_CLASS, ATTR_DIM, ATTR_ROWNAMES, ATTR_OTHER } zrd_attr_kind;
 
 typedef struct {
     zrd_walk w;
+    zrd_scan scan;         /* for the risky column */
     zrd_obj *objs;
     size_t n, cap;
     char *text;
@@ -50,6 +54,7 @@ typedef struct {
 static void toc_free(zrd_toc *t)
 {
     zrd_walk_free(&t->w);
+    zrd_scan_free(&t->scan);
     free(t->objs);
     free(t->text);
     free(t);
@@ -95,8 +100,15 @@ static zrd_attr_kind attr_kind(const zrd_event *ev)
 static int on_event(void *ctx, const zrd_event *ev)
 {
     zrd_toc *t = ctx;
-    if (ev->depth > 4) return 0;
+    size_t risky_now = t->scan.risky;
+    if (zrd_scan_event(&t->scan, ev)) { t->failed_alloc = 1; return 1; }
     zrd_obj *o = t->n ? &t->objs[t->n - 1] : NULL;
+    /* An object is risky if the scanner found, inside it, anything that
+     * runs code or reaches out. */
+    if (ev->depth == 1 && ev->kind == ZRD_EVENT_END &&
+        (ev->role == ZRD_ROLE_CAR || ev->role == ZRD_ROLE_CELL) && o)
+        o->risky = t->scan.risky > o->risky_before;
+    if (ev->depth > 4) return 0;
 
     /* A pairlist-family object's later cells (serialize.c,
      * ReadItem_Iterative): count them, and end the object at the last. */
@@ -141,6 +153,7 @@ static int on_event(void *ctx, const zrd_event *ev)
         o->nrow = -1;
         o->altrep_n = -1;
         o->cells = 1;
+        o->risky_before = risky_now;
         t->obj_open = 1;
         t->in_attr = t->in_info = t->in_state = 0;
         return 0;
@@ -237,6 +250,8 @@ static cetype_t char_encoding(int flags)
 static SEXP text_elt(const zrd_toc *t, int64_t off, size_t len, cetype_t enc)
 {
     if (off < 0) return NA_STRING;
+    /* An empty string may have no arena behind it at all. */
+    if (len == 0) return R_BlankString;
     const char *s = t->text + off;
     if (memchr(s, '\0', len)) return NA_STRING;
     return Rf_mkCharLenCE(s, (int) len, enc);
@@ -261,6 +276,7 @@ SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
     SEXP ptr = PROTECT(R_MakeExternalPtr(t, R_NilValue, src));
     R_RegisterCFinalizerEx(ptr, toc_finalizer, TRUE);
 
+    if (zrd_scan_init(&t->scan, &t->w, lim.max_depth)) Rf_error("cannot allocate the scanner");
     zrd_status st = zrd_walk_init(&t->w, &s->reader, &lim, on_event, t, tick, NULL);
     if (st == ZRD_OK) st = zrd_walk_capture_strings(&t->w, 4096);
     t->w.capture_ints = 1;
@@ -274,7 +290,7 @@ SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
     R_xlen_t n = (R_xlen_t) t->n;
     const char *cols[] = {"name", "type", "flags", "length", "offset", "end",
                           "class", "dim", "nrow", "altrep", "altrep_length",
-                          "cells", ""};
+                          "cells", "risky", ""};
     SEXP tab = PROTECT(Rf_mkNamed(VECSXP, cols));
     SET_VECTOR_ELT(tab, 0, Rf_allocVector(STRSXP, n));
     SET_VECTOR_ELT(tab, 1, Rf_allocVector(INTSXP, n));
@@ -286,6 +302,7 @@ SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
     SET_VECTOR_ELT(tab, 9, Rf_allocVector(STRSXP, n));
     SET_VECTOR_ELT(tab, 10, Rf_allocVector(REALSXP, n));
     SET_VECTOR_ELT(tab, 11, Rf_allocVector(REALSXP, n));
+    SET_VECTOR_ELT(tab, 12, Rf_allocVector(LGLSXP, n));
     for (R_xlen_t i = 0; i < n; i++) {
         const zrd_obj *o = &t->objs[i];
         SET_STRING_ELT(VECTOR_ELT(tab, 0), i,
@@ -305,6 +322,7 @@ SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
         SET_STRING_ELT(VECTOR_ELT(tab, 9), i, text_elt(t, o->altrep_off, o->altrep_len, CE_NATIVE));
         REAL(VECTOR_ELT(tab, 10))[i] = o->altrep_n;
         REAL(VECTOR_ELT(tab, 11))[i] = (double) o->cells;
+        LOGICAL(VECTOR_ELT(tab, 12))[i] = o->risky;
     }
 
     const char *names[] = {"status", "format", "version", "bytes", "offset",
