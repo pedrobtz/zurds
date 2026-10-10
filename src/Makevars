@@ -8,6 +8,7 @@ PKG_CFLAGS = $(C_VISIBILITY)
 
 OBJECTS = \
 	init.o \
+	zrd_build.o \
 	zrd_info.o \
 	zrd_reader.o \
 	zrd_scan.o \
