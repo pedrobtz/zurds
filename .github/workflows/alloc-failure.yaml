@@ -23,8 +23,9 @@ jobs:
       # itself, which is a finding about R (r-actions alloc-failure docs).
       baseline-run: R_ENABLE_JIT=0 Rscript tools/alloc-exercise.R --baseline
       run: R_ENABLE_JIT=0 Rscript tools/alloc-exercise.R
-      # R's own wordings for a failed allocation, as well as zurds'.
-      expect-pattern: "[Cc]annot allocate|memory exhausted|[Oo]ut of memory|out-of-memory|allocation of .* failed|cannot open the connection"
+      # R's own wordings for a failed allocation, as well as zurds', and
+      # the shell's ("xmalloc: out of virtual memory") when sh -c is hit.
+      expect-pattern: "[Cc]annot allocate|memory exhausted|[Oo]ut of (virtual )?memory|out-of-memory|allocation of .* failed|cannot open the connection"
       target-pattern: "out of memory for|cannot allocate a zurds|cannot allocate the walk"
       min-target-hits: 1
       # The workload adds about 2,900 allocations above the floor (measured
