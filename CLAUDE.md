@@ -25,15 +25,16 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 2, 2026-10-10:
+Stages 0 to 3, 2026-10-10:
 [`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md),
 the condition classes, symbol hiding and its gate; the source that opens
 a path, raw vector or connection and reads decompressed bytes; the
-fixture generator; and the walk over XDR streams of data items (vectors,
-strings, lists, pairlists, attributes, symbols, references) with its
-limits. Closures, environments, bytecode, ALTREP and the binary and
-ASCII formats are refused as “not walked yet”. No user-facing function
-beyond
+fixture generator; and the walk over XDR streams of every item kind R
+writes: data, closures, promises, language, environments (with cycles),
+namespace and package references, persistent references, external
+pointers, weak references, S4 objects, bytecode and ALTREP. The binary
+and ASCII formats are refused as “not walked yet”. No user-facing
+function beyond
 [`zurds_info()`](https://pedrobtz.github.io/zurds/reference/zurds_info.md)
 yet; the tests drive the internal `zrd_walk_info()`.
 
@@ -86,16 +87,19 @@ with `R_ReadConnection()`. `src/zrd_walk.c` is the walk: one frame per
 open item on an explicit stack of `max_depth + 1` frames, a
 [`step()`](https://rdrr.io/r/stats/step.html) loop that begins the next
 child or ends the item, and BEGIN/END events to a callback. A pairlist’s
-next cell reuses its frame, so long pairlists do not deepen the stack.
-`src/zrd_walk_r.c` runs it from R with the walk owned by an external
-pointer; `R/walk.R` maps its status to a condition class. `src/init.c`
-registers `.Call` routines and is the only exported symbol. Internal C
-symbols use the `zrd_` / `ZRD_` prefix. The walk (`src/zrd_walk.c`, from
-Stage 2) is R-free and must compile with `-DZRD_STANDALONE`; the data
-builder (`src/zrd_build.c`) is the only place R objects are made from
-stream content. R-side conditions are built in `R/conditions.R` by
-`zrd_abort()`; the class chain lives in `zrd_condition_classes`. Default
-limits live in `zrd_default_limits()`.
+next cell reuses its frame, so long pairlists do not deepen the stack;
+so does a closure’s body, which R writes as the closure cell’s
+continuation. Bytecode’s structures (`ReadBC1`, `ReadBCLang`) have no
+flags: they get pseudo-frames that count against the limits but emit no
+events, and a call’s cdr reuses its frame. `src/zrd_walk_r.c` runs it
+from R with the walk owned by an external pointer; `R/walk.R` maps its
+status to a condition class. `src/init.c` registers `.Call` routines and
+is the only exported symbol. Internal C symbols use the `zrd_` / `ZRD_`
+prefix. The walk (`src/zrd_walk.c`, from Stage 2) is R-free and must
+compile with `-DZRD_STANDALONE`; the data builder (`src/zrd_build.c`) is
+the only place R objects are made from stream content. R-side conditions
+are built in `R/conditions.R` by `zrd_abort()`; the class chain lives in
+`zrd_condition_classes`. Default limits live in `zrd_default_limits()`.
 
 ## Invariants that are easy to break
 
