@@ -15,7 +15,7 @@ SEXP zrd_source_bytes(SEXP ptr, SEXP skip, SEXP n);
 SEXP zrd_walk_stats(SEXP src, SEXP skip, SEXP limits);
 SEXP zrd_walk_trace(SEXP src, SEXP skip, SEXP limits, SEXP max_depth, SEXP max_events);
 SEXP zrd_walk_head(SEXP src, SEXP skip);
-SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits);
+SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits, SEXP root);
 SEXP zrd_scan_walk(SEXP src, SEXP skip, SEXP limits);
 SEXP zrd_build_walk(SEXP src, SEXP skip, SEXP limits, SEXP rda, SEXP strict,
                     SEXP session_encoding, SEXP target);

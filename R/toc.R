@@ -83,7 +83,7 @@ rds_toc <- function(x, kind = NULL) {
   limits <- zrd_limits(zrd_default_limits()$max_depth, zrd_default_limits()$max_items,
                        zrd_default_limits()$max_size, call)
   skip <- zrd_stream_skip(input)
-  res <- zrd_source_call(.Call(zrd_toc_walk, input$source, skip, limits), call)
+  res <- zrd_source_call(.Call(zrd_toc_walk, input$source, skip, limits, FALSE), call)
   if (res$status != "ZRD_OK") zrd_walk_fail(res, input, limits, call)
   toc <- zrd_toc_frame(res$objects, skip)
   key <- zrd_cache_key(input)

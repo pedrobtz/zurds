@@ -49,6 +49,8 @@ typedef struct {
     int in_state;          /* depth 2: walking an ALTREP object's state */
     zrd_attr_kind attr;    /* depth 3: the attribute being walked */
     int failed_alloc;
+    int root;              /* the stream's root is the one object: a
+                              lazy-load entry (rds_lazyload_toc()) */
 } zrd_toc;
 
 static void toc_free(zrd_toc *t)
@@ -102,6 +104,14 @@ static int on_event(void *ctx, const zrd_event *ev)
     zrd_toc *t = ctx;
     size_t risky_now = t->scan.risky;
     if (zrd_scan_event(&t->scan, ev)) { t->failed_alloc = 1; return 1; }
+    /* A lone object is seen as an .rda's would be: one level down. */
+    zrd_event shifted;
+    if (t->root) {
+        shifted = *ev;
+        shifted.depth += 1;
+        if (shifted.depth == 1 && ev->role == ZRD_ROLE_ROOT) shifted.role = ZRD_ROLE_CAR;
+        ev = &shifted;
+    }
     zrd_obj *o = t->n ? &t->objs[t->n - 1] : NULL;
     /* An object is risky if the scanner found, inside it, anything that
      * runs code or reaches out. */
@@ -259,7 +269,7 @@ static SEXP text_elt(const zrd_toc *t, int64_t off, size_t len, cetype_t enc)
 
 /* Walks the .rda stream in `src` after its magic line and returns one
  * column per field, one row per object. */
-SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
+SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits, SEXP root)
 {
     zrd_source *s = zrd_source_get(src);
     size_t nskip = (size_t) Rf_asInteger(skip);
@@ -275,6 +285,7 @@ SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits)
     if (t == NULL) Rf_error("cannot allocate the walk");
     SEXP ptr = PROTECT(R_MakeExternalPtr(t, R_NilValue, src));
     R_RegisterCFinalizerEx(ptr, toc_finalizer, TRUE);
+    t->root = Rf_asLogical(root) == TRUE;
 
     if (zrd_scan_init(&t->scan, &t->w, lim.max_depth)) Rf_error("cannot allocate the scanner");
     zrd_status st = zrd_walk_init(&t->w, &s->reader, &lim, on_event, t, tick, NULL);
