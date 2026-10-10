@@ -428,5 +428,5 @@ guarantee does and does not cover, from the package itself.
   recommended (yes). Affects the fixture matrix in Stage 1 and Stage 5.
 - **`zufast` on CRAN.** It is at 0.1.0 on GitHub, not on CRAN
   (2026-10-10). Nothing before Stage 12 waits on it; Stage 12 does.
-- **`R_ReadConnection()` on CRAN** (§13): settled by Stage 1's spike;
-  the fallback changes Stage 1's source, not later stages.
+- **`R_ReadConnection()` on CRAN** (§13): settled 2026-10-10 by Stage 1's
+  spike: it passes every leg; no fallback.
