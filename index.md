@@ -1,0 +1,24 @@
+# zurds
+
+The goal of zurds is to …
+
+## Installation
+
+You can install the development version of zurds from
+[GitHub](https://github.com/) with:
+
+``` r
+
+# install.packages("pak")
+pak::pak("pedrobtz/zurds")
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+``` r
+
+library(zurds)
+## basic example code
+```
