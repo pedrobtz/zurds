@@ -28,7 +28,7 @@ Rules that hold for every stage:
 | --- | --- | --- | --- | --- | --- |
 | 0 | Package identity | S | #2 | 2026-10-10 | [#17](https://github.com/pedrobtz/zurds/pull/17) |
 | 1 | Source and fixtures | M | #3 | 2026-10-10 | [#18](https://github.com/pedrobtz/zurds/pull/18) |
-| 2 | The walk: data items in XDR | L | #4 | | |
+| 2 | The walk: data items in XDR | L | #4 | 2026-10-10 | |
 | 3 | The walk: code, environments and ALTREP | M | #5 | | |
 | 4 | Binary and ASCII formats, rds_info() and rds_str() | M | #6 | | |
 | 5 | Table of contents for .rda files | M | #7 | | |
@@ -154,6 +154,10 @@ within limits checked before any length is trusted.
 - Each rule cross-referenced to the `serialize.c` function it mirrors.
 - Errors: `zurds_parse_error` (offset, path) and the `zurds_limit_error`
   subclasses.
+- *Deviation 2026-10-10:* `tools/make-fixtures.R` builds the `data_frame`
+  fixture's integer column with `c()`, not `1:3`: R serializes a compact
+  sequence as ALTREP, which is Stage 3's. `compact_seq` stays the ALTREP
+  fixture.
 
 **Exit criteria.**
 - Every data-only XDR fixture is walked to its end with the item count

@@ -313,11 +313,21 @@ string marked UTF-8 is an error in strict mode.
 
 Every condition inherits `zurds_error`: `zurds_invalid_argument`,
 `zurds_format_error` (bad magic, unknown format character, unsupported
-version), `zurds_parse_error` (with `offset` and the item path),
+version), `zurds_parse_error` (with `offset` and the item path; see
+below),
 `zurds_unsafe_content` (with the findings), `zurds_not_found` (a name or
 path not in the file), `zurds_encoding_error`, `zurds_limit_error` with
 `zurds_depth_limit`, `zurds_size_limit` and `zurds_item_limit`,
 `zurds_io_error`, `zurds_decompression_error`.
+
+**The item path** (settled in Stage 2): `[[i]]` for vector element `i`,
+`$name` for a pairlist value whose tag is `name` (an `.rda` object, an
+attribute), `@attr` for an attribute pairlist, and `@tag`, `@cdr`, `@name`
+for a cell's tag, a pairlist's end and a symbol's name. List elements are
+named by position, never by `names`: a list's `names` attribute follows its
+elements in the stream, so the walk has not read it yet. The `offset` of a
+parse or limit error is where the item at fault starts in the decompressed
+stream; for a truncated stream it is where the stream ends.
 
 ## 11. Limits and hostile input
 
