@@ -1,8 +1,10 @@
 #!/bin/sh
 # Fail if the built shared object exports anything but R_init_zurds (design
-# section 13, family rule R3), or references symbols R CMD check objects to:
+# section 13, family rule R3), references symbols R CMD check objects to:
 # output to the console (stdout, stderr, printf, puts, putchar) or ending the
-# process (abort, exit, _exit, and assert(), which reaches them). Run it on an
+# process (abort, exit, _exit, and assert(), which reaches them), or
+# references R's deserializer or evaluator, which zurds never calls
+# (design section 8, guarantee 1). Run it on an
 # R CMD INSTALL build: devtools::load_all() compiles with -UNDEBUG, which
 # keeps assert()s in.
 #
@@ -20,9 +22,13 @@ if [ "${1:-}" = "--canary" ]; then
 #include <stdio.h>
 #include <stdlib.h>
 void R_init_zurds(void) {}
-void zrd_leaked(void) { printf("x"); abort(); }
+extern void R_Unserialize(void *);
+void zrd_leaked(void) { printf("x"); R_Unserialize(0); abort(); }
 EOF
-  ${CC:-cc} -shared -fPIC -o "$dir/canary.so" "$dir/canary.c"
+  # R_Unserialize stays undefined, as in a package's shared object.
+  undefined=""
+  [ "$(uname)" = Darwin ] && undefined="-Wl,-undefined,dynamic_lookup"
+  ${CC:-cc} -shared -fPIC $undefined -o "$dir/canary.so" "$dir/canary.c"
   if "$0" "$dir/canary.so"; then
     echo "FAIL: the canary passed; the gate checks nothing" >&2
     exit 1
@@ -48,6 +54,15 @@ if [ -n "$found" ]; then
   fail=1
 fi
 
+# R's deserializer and evaluator, and what reaches them.
+EVAL='^_*(R_Unserialize|R_unserialize|R_InitInPStream|R_InitFileInPStream|R_InitConnInPStream|Rf_eval|R_tryEval|R_tryEvalSilent|R_forceAndCall|Rf_applyClosure|R_ExecWithCleanup)$'
+evalfound=$(nm -u "$SO" | awk '{print $NF}' | grep -E "$EVAL" || true)
+if [ -n "$evalfound" ]; then
+  echo "FAIL: $SO references R's deserializer or evaluator:" >&2
+  echo "$evalfound" | sed 's/^/  /' >&2
+  fail=1
+fi
+
 # Defined, external text symbols: only the init function may be visible.
 exported=$(nm -g "$SO" 2>/dev/null | awk '$2 == "T" {print $3}' \
   | sed 's/^_//' | grep -v '^R_init_zurds$' || true)
@@ -58,4 +73,4 @@ if [ -n "$exported" ]; then
 fi
 
 [ $fail = 0 ] || exit 1
-echo "==> $SO: exports only R_init_zurds; no console-output or process-exit symbols"
+echo "==> $SO: exports only R_init_zurds; no console-output, process-exit, deserializer or evaluator symbols"

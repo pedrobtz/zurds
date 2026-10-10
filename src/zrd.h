@@ -16,5 +16,9 @@ SEXP zrd_walk_trace(SEXP src, SEXP skip, SEXP limits, SEXP max_depth, SEXP max_e
 SEXP zrd_walk_head(SEXP src, SEXP skip);
 SEXP zrd_toc_walk(SEXP src, SEXP skip, SEXP limits);
 SEXP zrd_scan_walk(SEXP src, SEXP skip, SEXP limits);
+SEXP zrd_build_walk(SEXP src, SEXP skip, SEXP limits, SEXP rda, SEXP strict,
+                    SEXP session_encoding);
+struct zrd_scan;
+SEXP zrd_scan_findings(const struct zrd_scan *s);
 
 #endif /* ZRD_H */

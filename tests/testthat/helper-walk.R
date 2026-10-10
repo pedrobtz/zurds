@@ -84,6 +84,10 @@ event_shape <- function(path) {
   ev[c("kind", "type", "depth", "role", "index", "length", "name")]
 }
 
+# Objects rds_read_data() builds: data, and base R's ALTREP classes.
+buildable_fixture_objects <- c(data_fixture_objects, "compact_seq", "deferred_string")
+buildable_fixture_objects <- setdiff(buildable_fixture_objects, c("pairlist", "symbol"))
+
 # Fixtures with no finding: data, base R's ALTREP classes, and items that
 # cannot run code or reach out (language objects, symbols, primitives).
 # The formula fixture is not one: it keeps the environment it was made in.

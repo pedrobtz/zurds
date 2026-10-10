@@ -13,3 +13,6 @@
 * `rds_scan()` reports everything in a file that can run code, reach outside
   it, or needs a package; `rds_is_safe()` is `TRUE` when it finds nothing;
   `rds_deps()` lists the packages a file needs. `rds_toc()` fills `risky`.
+* `rds_read_data()` reads data-only files with a reader written in C that
+  builds only vectors, lists and attributes, and never calls `unserialize()`.
+  The result is `identical()` to `readRDS()`.
