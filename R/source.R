@@ -82,7 +82,7 @@ zrd_check_kind <- function(kind, call) {
 # pointer, NULL for a lazy-load database until Stage 9), the kind, format,
 # compression and, for a path, the path. The caller closes it with
 # zrd_close().
-zrd_open <- function(x, kind = NULL, call = parent.frame()) {
+zrd_open <- function(x, kind = NULL, call = NULL) {
   kind <- zrd_check_kind(kind, call)
   input <- if (is.raw(x)) {
     zrd_open_raw(x, call)
@@ -307,7 +307,7 @@ zrd_close <- function(input) {
 # Reads the rest of the input and returns the stream's length, raising
 # zurds_decompression_error when the codec reports a problem or a gzip
 # stream is shorter than its trailer says.
-zrd_drain <- function(input, call = parent.frame()) {
+zrd_drain <- function(input, call = NULL) {
   n <- zrd_source_call(.Call(zrd_source_drain, input$source), call)
   zrd_check_gzip_size(n, input$gzip_size, call)
   n
