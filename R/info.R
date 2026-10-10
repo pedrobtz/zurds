@@ -42,7 +42,8 @@ zrd_compressions <- function() {
 #' @examples
 #' zurds_info()
 zurds_info <- function() {
-  info <- .Call(zrd_build_info)
+  probe <- as.raw(c(0xde, 0xad, 0xbe, 0xef, 0x01, 0x80, 0x7f, 0x00))
+  info <- .Call(zrd_build_info, probe)
   structure(
     list(
       version = unname(getNamespaceVersion("zurds")),

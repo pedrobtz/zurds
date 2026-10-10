@@ -37,3 +37,9 @@ test_that("zstd is reported exactly when this R can write it", {
 test_that("zurds_info() prints", {
   expect_output(print(zurds_info()), "self-test ok", fixed = TRUE)
 })
+
+test_that("the zufast self-test fails on bytes that are not its probe", {
+  expect_false(.Call(zrd_build_info, as.raw(1:4))$zufast_ok)
+  expect_false(.Call(zrd_build_info, as.raw(1:3))$zufast_ok)
+  expect_false(.Call(zrd_build_info, 1L)$zufast_ok)
+})

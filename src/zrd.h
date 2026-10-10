@@ -7,6 +7,6 @@
 #include <R.h>
 #include <Rinternals.h>
 
-SEXP zrd_build_info(void);
+SEXP zrd_build_info(SEXP probe);
 
 #endif /* ZRD_H */

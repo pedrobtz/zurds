@@ -4,7 +4,7 @@
 #include "zrd.h"
 
 static const R_CallMethodDef CallEntries[] = {
-    {"zrd_build_info", (DL_FUNC) &zrd_build_info, 0},
+    {"zrd_build_info", (DL_FUNC) &zrd_build_info, 1},
     {NULL, NULL, 0}
 };
 
