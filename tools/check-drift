@@ -1,0 +1,57 @@
+#!/bin/sh
+# R drift check (design section 14; roadmap Stage 10): fails when R's
+# src/main/serialize.c, on R-devel or on the newest release branch, is not a
+# version the walk has been reviewed against (tools/drift/reviewed.txt).
+#
+# Usage: tools/check-drift              fetch trunk and the newest branch
+#        tools/check-drift FILE...      check these copies of serialize.c
+#        tools/check-drift --canary     a modified copy must fail
+set -eu
+
+REVIEWED="$(dirname "$0")/drift/reviewed.txt"
+RAW=https://raw.githubusercontent.com/wch/r-source
+
+sha() { (sha256sum "$1" 2>/dev/null || shasum -a 256 "$1") | awk '{print $1}'; }
+
+check() { # file label
+  h=$(sha "$1")
+  if grep -v '^#' "$REVIEWED" | awk '{print $1}' | grep -qx "$h"; then
+    echo "==> $2: serialize.c $h reviewed"
+    return 0
+  fi
+  echo "FAIL: $2: serialize.c $h is not a reviewed version; see $REVIEWED" >&2
+  return 1
+}
+
+if [ "${1:-}" = "--canary" ]; then
+  dir=$(mktemp -d)
+  trap 'rm -rf "$dir"' EXIT
+  curl -fsSL "$RAW/trunk/src/main/serialize.c" -o "$dir/serialize.c"
+  printf '/* a change the walk has not been reviewed against */\n' >> "$dir/serialize.c"
+  if "$0" "$dir/serialize.c"; then
+    echo "FAIL: the canary passed; the drift check checks nothing" >&2
+    exit 1
+  fi
+  echo "==> canary rejected, as it must be"
+  exit 0
+fi
+
+if [ $# -gt 0 ]; then
+  fail=0
+  for f in "$@"; do check "$f" "$f" || fail=1; done
+  exit $fail
+fi
+
+dir=$(mktemp -d)
+trap 'rm -rf "$dir"' EXIT
+# The newest release branch: R-x-y-branch with the highest x, y.
+branch=$(curl -fsSL "https://api.github.com/repos/wch/r-source/git/matching-refs/heads/R-" |
+  grep -o '"refs/heads/R-[0-9]*-[0-9]*-branch"' | tr -d '"' | sed 's|refs/heads/||' |
+  sort -t- -k2,2n -k3,3n | tail -n 1)
+[ -n "$branch" ] || { echo "cannot find R's release branches" >&2; exit 2; }
+fail=0
+for ref in trunk "$branch"; do
+  curl -fsSL "$RAW/$ref/src/main/serialize.c" -o "$dir/$ref.c"
+  check "$dir/$ref.c" "$ref" || fail=1
+done
+exit $fail

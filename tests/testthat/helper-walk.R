@@ -96,3 +96,11 @@ clean_fixture_objects <- c(
   "builtin", "special", "zlib"
 )
 
+
+# Vcells R allocates while `expr` runs, at most.
+max_vcells <- function(expr) {
+  gc(reset = TRUE)
+  before <- gc()[2, "max used"]
+  force(expr)
+  gc()[2, "max used"] - before
+}

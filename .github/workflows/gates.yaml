@@ -6,6 +6,9 @@
 #   standalone  the walk builds with no R (-DZRD_STANDALONE) and walks every
 #               uncompressed XDR fixture of the full matrix, and every prefix
 #               of each, clean under ASan and UBSan (roadmap Stage 2)
+#   fuzz canary the fuzz target runs every seed cleanly and crashes on its
+#               planted input, so fuzz.yaml's clean runs mean something
+#               (roadmap Stage 10)
 on:
   push:
     branches: [main, master]
@@ -64,3 +67,23 @@ jobs:
         env:
           CC: clang
         run: tools/run-standalone "$RUNNER_TEMP/full"
+
+  fuzz-canary:
+    runs-on: ubuntu-latest
+    name: fuzz canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"hard"'
+      - name: Install clang
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q clang
+      - name: The target runs the seeds and crashes on its canary
+        env:
+          CC: clang
+        run: tools/run-fuzz-canary
