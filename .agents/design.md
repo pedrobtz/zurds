@@ -445,7 +445,9 @@ Reasons where they are not in the section cited:
 2. **Data frames with list columns** of mixed types: build as lists (as
    proposed) or refuse in strict mode? Recommended: build.
 3. **`.RData` from very old R** (format version 2, `RDX2`): support fully
-   in 0.1.0? Recommended: yes; R writes version 2 when asked.
+   in 0.1.0? Recommended: yes; R writes version 2 when asked. **Settled
+   2026-10-10 (Stage 5): yes.** Every format of version 2 is walked, and
+   `rds_toc()` agrees with `load()` on the version 2 fixtures.
 4. **Diff and hash** in 0.1.0 rather than later? Recommended: later; the
    walk makes them small once the event stream is stable.
 

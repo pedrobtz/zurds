@@ -8,3 +8,5 @@
 * `rds_str()` prints a `str()`-like summary of a file from its stream
   alone, without building any object or running any code. It reads XDR,
   native binary (either byte order) and ASCII streams.
+* `rds_toc()` lists the objects of an `.rda` file, with their types, classes,
+  lengths, dimensions, sizes and offsets, without building any of them.
