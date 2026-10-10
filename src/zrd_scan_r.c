@@ -38,6 +38,8 @@ static int on_event(void *ctx, const zrd_event *ev)
 static SEXP text_elt(const zrd_scan *s, int64_t off, size_t len)
 {
     if (off < 0) return NA_STRING;
+    /* An empty string may have no arena behind it at all. */
+    if (len == 0) return R_BlankString;
     const char *p = s->text + off;
     if (memchr(p, '\0', len)) return NA_STRING;
     return Rf_mkCharLenCE(p, (int) len, CE_NATIVE);

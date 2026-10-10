@@ -250,6 +250,8 @@ static cetype_t char_encoding(int flags)
 static SEXP text_elt(const zrd_toc *t, int64_t off, size_t len, cetype_t enc)
 {
     if (off < 0) return NA_STRING;
+    /* An empty string may have no arena behind it at all. */
+    if (len == 0) return R_BlankString;
     const char *s = t->text + off;
     if (memchr(s, '\0', len)) return NA_STRING;
     return Rf_mkCharLenCE(s, (int) len, enc);
