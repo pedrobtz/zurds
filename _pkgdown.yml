@@ -2,3 +2,33 @@ url: https://pedrobtz.github.io/zurds/
 template:
   bootstrap: 5
 
+reference:
+  - title: Look inside a file
+    desc: Without building anything it holds.
+    contents:
+      - rds_info
+      - rds_str
+      - rds_toc
+  - title: Is it safe?
+    contents:
+      - rds_scan
+      - rds_deps
+  - title: Read data
+    desc: With a reader that builds only data and never runs code.
+    contents:
+      - rds_read_data
+      - rds_extract
+  - title: Lazy-load databases
+    contents:
+      - rds_lazyload_toc
+      - rds_lazyload_extract
+  - title: The package
+    contents:
+      - zurds_info
+      - zurds-conditions
+      - zurds-package
+
+articles:
+  - title: Articles
+    contents:
+      - safe-reading
