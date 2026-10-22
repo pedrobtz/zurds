@@ -23,8 +23,12 @@ jobs:
     with:
       harness: tools/fuzz/harness.c
       sources: src/zrd_reader.c src/zrd_walk.c src/zrd_scan.c src/zrd_inflate.c
-      # zufast is LinkingTo-only and not on CRAN: its headers from GitHub.
+      # The standalone build needs zufast's headers, not an installed zufast:
+      # they come from its source tree.
       github-packages: pedrobtz/zufast
       cflags: -g -O1 -fno-omit-frame-pointer -DZRD_STANDALONE -Isrc -I.github-packages/zufast/inst/include
       seed-corpus: tests/testthat/fixtures
       max-total-time: ${{ github.event_name == 'schedule' && 1800 || 120 }}
+      # The job's limit must outlast the campaign, or every nightly run is
+      # cancelled before it reports.
+      timeout-minutes: ${{ github.event_name == 'schedule' && 50 || 30 }}
