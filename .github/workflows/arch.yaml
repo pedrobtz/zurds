@@ -17,14 +17,5 @@ jobs:
   arch:
     uses: pedrobtz/r-actions/.github/workflows/arch.yml@v1
     with:
-      # zufast is LinkingTo-only and not on CRAN: installed from GitHub.
-      # Drop this input once it is on CRAN (roadmap Stage 12).
-      install-dependencies: >-
-        Rscript -e 'install.packages(c("testthat", "withr"), repos = "https://cloud.r-project.org");
-        f <- tempfile(fileext = ".tar.gz");
-        download.file("https://github.com/pedrobtz/zufast/archive/refs/heads/main.tar.gz", f);
-        d <- tempfile(); untar(f, exdir = d);
-        install.packages(list.files(d, full.names = TRUE), repos = NULL, type = "source");
-        stopifnot(requireNamespace("zufast"), requireNamespace("testthat"))'
       error-on: warning
       require-tests: true

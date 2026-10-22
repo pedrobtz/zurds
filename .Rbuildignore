@@ -11,3 +11,8 @@
 \.so$
 \.dll$
 ^\.gitattributes$
+^cran-comments\.md$
+^CRAN-SUBMISSION$
+^\.claude$
+^\.superpowers$
+^\.worktrees$

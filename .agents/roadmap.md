@@ -38,7 +38,7 @@ Rules that hold for every stage:
 | 9 | Lazy-load databases | M | #11 | 2026-10-10 | [#26](https://github.com/pedrobtz/zurds/pull/26) |
 | 10 | Hardening: fuzzing, hostile inputs, drift, benchmarks | M | #12 | 2026-10-10 | [#27](https://github.com/pedrobtz/zurds/pull/27) |
 | 11 | Documentation | S | #13 | 2026-10-10 | [#28](https://github.com/pedrobtz/zurds/pull/28) |
-| 12 | v0.1.0 readiness | S | #14 | | |
+| 12 | v0.1.0 readiness | S | #14 | 2026-10-22 | [#29](https://github.com/pedrobtz/zurds/pull/29) |
 
 ## Stage 0 — Package identity
 
@@ -53,7 +53,7 @@ and exercised, and the questions §3 leaves to this stage answered.
   `LinkingTo: zufast (>= 0.1.0)`; `Suggests: testthat (>= 3.0.0), withr`;
   `Version: 0.0.0.9000`.
 - Providers: `zufast` is not on CRAN (checked 2026-10-10). Develop with
-  `Remotes: pedrobtz/zufast`; Stage 12 removes it.
+  `Remotes: pedrobtz/zufast`; Stage 12 removes it (done 2026-10-22).
 - `LICENSE` / `LICENSE.md` name the real copyright holder. No vendored
   code (§3).
 - `.Rbuildignore`: `^\.agents$` (done), `^tools$`, and object-file
@@ -425,6 +425,25 @@ guarantee does and does not cover, from the package itself.
 
 **Design.** §13, §19.
 
+**§19 acceptance criteria** (checked 2026-10-22):
+- [x] 1. Builds with `zufast` from CRAN, no `Remotes:`; `--as-cran` clean
+  on every R-CMD-check leg, now with Windows R-devel, R 4.1, `nosuggests`
+  and `nold`; `gates.yaml` `symbols` shows `R_init_zurds` is the only
+  export.
+- [x] 2. `fixtures.yaml` walks the full matrix and compares every
+  data-only fixture with `readRDS()` (`identical()`), on oldrel, release
+  and devel; `gates.yaml` `standalone` walks it without R.
+- [x] 3. `test-scan.R` finds each finding kind at its path;
+  `test-read-data.R` and `test-extract.R` refuse the CVE-2024-27322-style
+  fixture.
+- [x] 4. The walk allocates no R object (`-DZRD_STANDALONE` build in
+  `gates.yaml`); hostile inputs fail with classed errors under limits
+  (Stage 10); `gates.yaml` `fuzz canary` crashes on its planted input.
+  The nightly fuzz run was cancelled at its 30-minute job limit, which
+  equalled the campaign's length; Stage 12 gives the job 50 minutes.
+- [x] 5. `drift.yaml` checks `serialize.c` weekly on R-devel and the newest
+  release branch, so a change is caught in the cycle it lands in.
+
 ## After 0.1.0
 
 - Structural diff of two files and a content hash independent of
@@ -444,7 +463,7 @@ guarantee does and does not cover, from the package itself.
   in Stage 7: built as lists.
 - **`RDX2` / format version 2 in 0.1.0** (§17 Q3): settled 2026-10-10 in
   Stage 5: yes.
-- **`zufast` on CRAN.** It is at 0.1.0 on GitHub, not on CRAN
-  (2026-10-10). Nothing before Stage 12 waits on it; Stage 12 does.
+- **`zufast` on CRAN.** Settled: 0.1.0 is on CRAN (checked 2026-10-22);
+  Stage 12 dropped `Remotes:`.
 - **`R_ReadConnection()` on CRAN** (§13): settled 2026-10-10 by Stage 1's
   spike: it passes every leg; no fallback.

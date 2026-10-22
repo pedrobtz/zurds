@@ -1,5 +1,6 @@
-# zurds 0.0.0.9000
+# zurds 0.1.0
 
+* Initial CRAN submission.
 * `zurds_info()` reports the package and `zufast` versions, the default
   limits, and the compressions this R can read.
 * `rds_info()` reads the header of an `.rds`, `.rda` or `serialize()`

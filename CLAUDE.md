@@ -21,9 +21,10 @@ this file. [`.agents/roadmap.md`](.agents/roadmap.md) stages the work to
 
 ## Current state
 
-Stages 0 to 11, 2026-10-10: the whole v0.1.0 API (design section 5), hardened and documented. The walk reads XDR, native binary and ASCII
-streams of every item kind R writes. Not yet: Stage 12 (v0.1.0 readiness). See the roadmap's
-stage table for what is done.
+Stages 0 to 12, 2026-10-22: the whole v0.1.0 API (design section 5),
+hardened, documented and at `0.1.0`, ready for CRAN. The walk reads XDR,
+native binary and ASCII streams of every item kind R writes. Next: the
+submission (#15). See the roadmap's stage table for what is done.
 
 ## Stage tracking
 
@@ -159,7 +160,8 @@ documentation and a `NEWS.md` entry.
 
 CI through `pedrobtz/r-actions` is the pre-submission check; no
 win-builder, macOS builder or R-hub. Fix NOTEs rather than explaining them.
-`Remotes: pedrobtz/zufast` stays until `zufast` is on CRAN (Stage 12).
+`zufast` comes from CRAN; no `Remotes:`. `cran-comments.md` names the CI
+legs as the test environments.
 
 ## Editing rules
 
@@ -173,8 +175,9 @@ win-builder, macOS builder or R-hub. Fix NOTEs rather than explaining them.
 
 Calls `pedrobtz/r-actions` at `@v1`: `r-cmd-check.yml` (R-CMD-check),
 `coverage.yml`, and in `native-checks.yaml` `sanitizers.yml`,
-`valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml` (with
-`github-packages: pedrobtz/zufast`), `analyzers.yml`, `cran-special.yml`.
+`valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml`, `analyzers.yml`,
+`cran-special.yml`. R-CMD-check adds Windows R-devel and R 4.1 to the
+shared runners.
 `gates.yaml` runs `tools/check-symbols` and its canary, and
 `tools/run-standalone` over the full fixture matrix. `arch.yaml` (32-bit,
 musl) and `alloc-failure.yaml` (fails each allocation of

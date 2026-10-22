@@ -22,3 +22,16 @@ jobs:
       # Quick on each push to a pull request, full after merge. The
       # `full-ci` label runs the full set on a pull request before merging.
       profile: ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full-ci') && 'quick' || 'full' }}
+      # The shared default plus CRAN's Windows R-devel flavour, which no
+      # container covers, and the R that `Depends` declares.
+      runners: >-
+        [{"os": "macos-latest", "r": "release"},
+         {"os": "windows-latest", "r": "release"},
+         {"os": "windows-latest", "r": "devel"},
+         {"os": "ubuntu-latest", "r": "release"},
+         {"os": "ubuntu-latest", "r": "oldrel-1"},
+         {"os": "ubuntu-latest", "r": "4.1"}]
+      # CRAN's NOSUGGESTS flavour, since zurds has Suggests, and its NOLD
+      # flavour, since the ASCII format carries doubles as text.
+      nosuggests: true
+      nold: true

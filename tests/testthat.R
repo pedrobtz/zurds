@@ -6,7 +6,10 @@
 # * https://r-pkgs.org/testing-design.html#sec-tests-files-overview
 # * https://testthat.r-lib.org/articles/special-files.html
 
-library(testthat)
-library(zurds)
+# Guarded for CRAN's NOSUGGESTS flavour, where testthat is not installed.
+if (requireNamespace("testthat", quietly = TRUE)) {
+  library(testthat)
+  library(zurds)
 
-test_check("zurds")
+  test_check("zurds")
+}

@@ -404,10 +404,12 @@ a raw vector.
   `clang23`, `ubuntu-clang` and `ubuntu-gcc16` that stand in for CRAN's
   `r-devel-linux-x86_64-debian-clang` and `-debian-gcc`; and under ASan,
   UBSan, valgrind, rchk and LTO. The `readBin()` fallback is not needed.
-  R 4.2.2 (Debian bookworm, on the weekly i386 leg) still lists
-  `R_GetConnection` and `R_ReadConnection` as non-API and notes them;
-  R 4.4 and later do not. CRAN checks only current releases, so this
-  stays a NOTE on that leg, not a reason for the fallback.
+  R 4.5 and earlier list `R_GetConnection` and `R_ReadConnection` as
+  non-API and note them (seen on oldrel-1, R 4.5.3, and the i386 leg);
+  R 4.6 and R-devel do not. CRAN checks submissions on release and
+  devel, so this stays a NOTE on its oldrel flavours, not a reason for
+  the fallback. Corrected 2026-10-22 (Stage 12): the first record said
+  R 4.4.
 - R's codecs fail quietly on truncated input (Stage 1): through `gzfile()`,
   gzip reads short, bzip2 and zstd read nothing, and xz warns; and
   `memDecompress()` with zlib doubles its buffer without bound on

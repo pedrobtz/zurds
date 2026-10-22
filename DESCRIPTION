@@ -1,6 +1,6 @@
 Package: zurds
 Title: Inspect and Safely Read R Serialization Files
-Version: 0.0.0.9000
+Version: 0.1.0
 Authors@R: 
     person("Pedro", "Baltazar", , "pedrobtz@gmail.com",
            role = c("aut", "cre", "cph"))
@@ -25,8 +25,6 @@ Suggests:
     rmarkdown,
     testthat (>= 3.0.0),
     withr
-Remotes: 
-    pedrobtz/zufast
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Encoding: UTF-8
