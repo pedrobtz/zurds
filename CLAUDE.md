@@ -25,10 +25,10 @@ stages the work to 0.1.0, tracked in [v0.1.0
 
 ## Current state
 
-Stages 0 to 11, 2026-10-10: the whole v0.1.0 API (design section 5),
-hardened and documented. The walk reads XDR, native binary and ASCII
-streams of every item kind R writes. Not yet: Stage 12 (v0.1.0
-readiness). See the roadmap’s stage table for what is done.
+Stages 0 to 12, 2026-10-22: the whole v0.1.0 API (design section 5),
+hardened, documented and at `0.1.0`, ready for CRAN. The walk reads XDR,
+native binary and ASCII streams of every item kind R writes. Next: the
+submission (#15). See the roadmap’s stage table for what is done.
 
 ## Stage tracking
 
@@ -180,8 +180,8 @@ entry.
 
 CI through `pedrobtz/r-actions` is the pre-submission check; no
 win-builder, macOS builder or R-hub. Fix NOTEs rather than explaining
-them. `Remotes: pedrobtz/zufast` stays until `zufast` is on CRAN (Stage
-12).
+them. `zufast` comes from CRAN; no `Remotes:`. `cran-comments.md` names
+the CI legs as the test environments.
 
 ## Editing rules
 
@@ -195,17 +195,17 @@ them. `Remotes: pedrobtz/zufast` stays until `zufast` is on CRAN (Stage
 
 Calls `pedrobtz/r-actions` at `@v1`: `r-cmd-check.yml` (R-CMD-check),
 `coverage.yml`, and in `native-checks.yaml` `sanitizers.yml`,
-`valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml` (with
-`github-packages: pedrobtz/zufast`), `analyzers.yml`,
-`cran-special.yml`. `gates.yaml` runs `tools/check-symbols` and its
-canary, and `tools/run-standalone` over the full fixture matrix.
-`arch.yaml` (32-bit, musl) and `alloc-failure.yaml` (fails each
-allocation of `tools/alloc-exercise.R`) run weekly. `fuzz.yaml` runs
-libFuzzer on `tools/fuzz/harness.c` (the walk, the scanner, payload
-decoding and the zlib decoder; 2 minutes per pull request, 30 nightly),
-and `drift.yaml` checks `serialize.c` weekly. `fixtures.yaml`
-regenerates the fixtures on oldrel, release and devel, checks the
-checked-in manifest, and runs the suite on the full matrix.
+`valgrind.yml`, `lto.yml`, `gctorture.yml`, `rchk.yml`, `analyzers.yml`,
+`cran-special.yml`. R-CMD-check adds Windows R-devel and R 4.1 to the
+shared runners. `gates.yaml` runs `tools/check-symbols` and its canary,
+and `tools/run-standalone` over the full fixture matrix. `arch.yaml`
+(32-bit, musl) and `alloc-failure.yaml` (fails each allocation of
+`tools/alloc-exercise.R`) run weekly. `fuzz.yaml` runs libFuzzer on
+`tools/fuzz/harness.c` (the walk, the scanner, payload decoding and the
+zlib decoder; 2 minutes per pull request, 30 nightly), and `drift.yaml`
+checks `serialize.c` weekly. `fixtures.yaml` regenerates the fixtures on
+oldrel, release and devel, checks the checked-in manifest, and runs the
+suite on the full matrix.
 
 ## Commits and pull requests
 

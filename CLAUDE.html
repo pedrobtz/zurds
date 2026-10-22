@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">zurds</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -44,7 +44,7 @@
 </div>
 <div class="section level2">
 <h2 id="current-state">Current state<a class="anchor" aria-label="anchor" href="#current-state"></a></h2>
-<p>Stages 0 to 11, 2026-10-10: the whole v0.1.0 API (design section 5), hardened and documented. The walk reads XDR, native binary and ASCII streams of every item kind R writes. Not yet: Stage 12 (v0.1.0 readiness). See the roadmap’s stage table for what is done.</p>
+<p>Stages 0 to 12, 2026-10-22: the whole v0.1.0 API (design section 5), hardened, documented and at <code>0.1.0</code>, ready for CRAN. The walk reads XDR, native binary and ASCII streams of every item kind R writes. Next: the submission (#15). See the roadmap’s stage table for what is done.</p>
 </div>
 <div class="section level2">
 <h2 id="stage-tracking">Stage tracking<a class="anchor" aria-label="anchor" href="#stage-tracking"></a></h2>
@@ -114,7 +114,7 @@
 </div>
 <div class="section level2">
 <h2 id="releasing-to-cran">Releasing to CRAN<a class="anchor" aria-label="anchor" href="#releasing-to-cran"></a></h2>
-<p>CI through <code>pedrobtz/r-actions</code> is the pre-submission check; no win-builder, macOS builder or R-hub. Fix NOTEs rather than explaining them. <code>Remotes: pedrobtz/zufast</code> stays until <code>zufast</code> is on CRAN (Stage 12).</p>
+<p>CI through <code>pedrobtz/r-actions</code> is the pre-submission check; no win-builder, macOS builder or R-hub. Fix NOTEs rather than explaining them. <code>zufast</code> comes from CRAN; no <code>Remotes:</code>. <code>cran-comments.md</code> names the CI legs as the test environments.</p>
 </div>
 <div class="section level2">
 <h2 id="editing-rules">Editing rules<a class="anchor" aria-label="anchor" href="#editing-rules"></a></h2>
@@ -126,7 +126,7 @@
 </ul></div>
 <div class="section level2">
 <h2 id="continuous-integration">Continuous integration<a class="anchor" aria-label="anchor" href="#continuous-integration"></a></h2>
-<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code> (with <code>github-packages: pedrobtz/zufast</code>), <code>analyzers.yml</code>, <code>cran-special.yml</code>. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary, and <code>tools/run-standalone</code> over the full fixture matrix. <code>arch.yaml</code> (32-bit, musl) and <code>alloc-failure.yaml</code> (fails each allocation of <code>tools/alloc-exercise.R</code>) run weekly. <code>fuzz.yaml</code> runs libFuzzer on <code>tools/fuzz/harness.c</code> (the walk, the scanner, payload decoding and the zlib decoder; 2 minutes per pull request, 30 nightly), and <code>drift.yaml</code> checks <code>serialize.c</code> weekly. <code>fixtures.yaml</code> regenerates the fixtures on oldrel, release and devel, checks the checked-in manifest, and runs the suite on the full matrix.</p>
+<p>Calls <code>pedrobtz/r-actions</code> at <code>@v1</code>: <code>r-cmd-check.yml</code> (R-CMD-check), <code>coverage.yml</code>, and in <code>native-checks.yaml</code> <code>sanitizers.yml</code>, <code>valgrind.yml</code>, <code>lto.yml</code>, <code>gctorture.yml</code>, <code>rchk.yml</code>, <code>analyzers.yml</code>, <code>cran-special.yml</code>. R-CMD-check adds Windows R-devel and R 4.1 to the shared runners. <code>gates.yaml</code> runs <code>tools/check-symbols</code> and its canary, and <code>tools/run-standalone</code> over the full fixture matrix. <code>arch.yaml</code> (32-bit, musl) and <code>alloc-failure.yaml</code> (fails each allocation of <code>tools/alloc-exercise.R</code>) run weekly. <code>fuzz.yaml</code> runs libFuzzer on <code>tools/fuzz/harness.c</code> (the walk, the scanner, payload decoding and the zlib decoder; 2 minutes per pull request, 30 nightly), and <code>drift.yaml</code> checks <code>serialize.c</code> weekly. <code>fixtures.yaml</code> regenerates the fixtures on oldrel, release and devel, checks the checked-in manifest, and runs the suite on the full matrix.</p>
 </div>
 <div class="section level2">
 <h2 id="commits-and-pull-requests">Commits and pull requests<a class="anchor" aria-label="anchor" href="#commits-and-pull-requests"></a></h2>

@@ -33,7 +33,7 @@ A list of class `zurds_info` with elements:
 ``` r
 zurds_info()
 #> <zurds_info>
-#> zurds:          0.0.0.9000
+#> zurds:          0.1.0
 #> zufast:         0.1.0 (self-test ok)
 #> max_depth:      512
 #> max_items:      100,000,000

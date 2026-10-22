@@ -17,8 +17,14 @@ building nothing it was not asked for.
 
 ## Installation
 
-zurds is not on CRAN yet. Install it, and the `zufast` headers it is
-built with, from GitHub:
+Install the released version from CRAN:
+
+``` r
+
+install.packages("zurds")
+```
+
+Or the development version from GitHub:
 
 ``` r
 
