@@ -548,4 +548,19 @@ Reasons where they are not in the section cited:
 - Whether to propose the scanner to R Core as a `readRDS(safe = TRUE)`
   option. A working package is the better argument; decide after 0.1.0.
 
+## 21. Later versions, in the order they are expected
+
+- **`rds_ranges()`** ([#30](https://github.com/pedrobtz/zurds/issues/30)):
+  the byte range of each top-level element, and of each column of a data
+  frame, in an uncompressed stream. The walk already has every offset;
+  this exposes them. With `zudedup` storing the stream as chunks, a
+  consumer such as `dastash` reads one column of a cached object by
+  fetching only its chunks, and a manifest diff between two versions
+  names the columns that changed. Compressed input is refused by name,
+  since it has no stable ranges.
+- **Byte-level diffs** of two serialized objects through `zudiff`
+  ([RFC 0045](https://github.com/pedrobtz/packages/blob/main/rfcs/not-started/0045-zudiff-sequence-diff-in-goose.md)),
+  over the ranges above rather than whole files.
+- **Writing files**, as §20 leaves open.
+
 Review prepared with assistance from generative AI.
