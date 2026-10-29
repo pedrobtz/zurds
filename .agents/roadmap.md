@@ -467,3 +467,13 @@ guarantee does and does not cover, from the package itself.
   Stage 12 dropped `Remotes:`.
 - **`R_ReadConnection()` on CRAN** (§13): settled 2026-10-10 by Stage 1's
   spike: it passes every leg; no fallback.
+
+## After 0.1.0
+
+Recorded 2026-10-28, not part of the release above:
+
+- `rds_ranges()`: byte ranges of top-level elements and data-frame
+  columns in an uncompressed stream, exposing offsets the walk already
+  has, so that `zudedup` consumers fetch one column's chunks and a
+  manifest diff names the columns that changed.
+  [#30](https://github.com/pedrobtz/zurds/issues/30); RFC 0015 §21.
