@@ -2,8 +2,11 @@
 # and CRAN's special checks. Quick on each push to a pull request, full after
 # merge; the full-ci label runs the full set on a pull request.
 on:
-  push:
-    branches: [main, master]
+  # No `push:`: a pull request already checks its merge with main,
+  # and the schedule checks main (r-actions README, "Pushes to main").
+  schedule:
+    - cron: "20 17 * * 0"
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
 

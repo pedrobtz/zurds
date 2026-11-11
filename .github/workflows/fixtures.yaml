@@ -6,8 +6,8 @@
 #   - writes the full matrix, every object in every format, version and
 #     compression, and runs the suite against it.
 on:
-  push:
-    branches: [main, master]
+  # No `push:`: a pull request already checks its merge with main,
+  # and the schedule checks main (r-actions README, "Pushes to main").
   pull_request:
 
 name: fixtures

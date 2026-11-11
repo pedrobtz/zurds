@@ -6,7 +6,7 @@
 # must fail.
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    - cron: "10 17 * * 0"
   pull_request:
     paths:
       - "tools/check-drift"
