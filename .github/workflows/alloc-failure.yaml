@@ -4,7 +4,7 @@
 # file or the C sources' allocation code paths.
 on:
   schedule:
-    - cron: "0 4 * * 0"
+    - cron: "55 16 * * 0"
   pull_request:
     paths:
       - ".github/workflows/alloc-failure.yaml"

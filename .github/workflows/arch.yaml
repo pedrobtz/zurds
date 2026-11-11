@@ -3,7 +3,7 @@
 # request that changes this file.
 on:
   schedule:
-    - cron: "0 5 * * 2"
+    - cron: "0 17 * * 0"
   pull_request:
     paths:
       - ".github/workflows/arch.yaml"
