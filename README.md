@@ -2,7 +2,7 @@
 
 <!-- badges: start -->
 [![R-CMD-check](https://github.com/pedrobtz/zurds/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/pedrobtz/zurds/actions/workflows/R-CMD-check.yaml)
-[![coverage](https://raw.githubusercontent.com/pedrobtz/zurds/main/.github/badges/coverage.svg)](https://github.com/pedrobtz/zurds/actions/workflows/coverage.yaml)
+[![coverage](https://raw.githubusercontent.com/pedrobtz/zurds/gh-pages/badges/coverage.svg)](https://github.com/pedrobtz/zurds/actions/workflows/coverage.yaml)
 <!-- badges: end -->
 
 zurds reads the files R writes with `saveRDS()`, `save()` and
