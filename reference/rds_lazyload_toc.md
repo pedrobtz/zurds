@@ -48,9 +48,9 @@ stats <- file.path(system.file("R", package = "stats"), "stats")
 head(rds_lazyload_toc(stats))
 #>                   name        type class length  dim  size offset risky
 #> 1                .Diag     closure  <NA>      1 <NA>  4836      0  TRUE
-#> 2             .MFclass     closure  <NA>      1 <NA>  3503   1121  TRUE
-#> 3       .NewtonRaphson     closure  <NA>      1 <NA> 15297   1903  TRUE
-#> 4      .__NAMESPACE__. environment  <NA>      1 <NA>    58   6273  TRUE
-#> 5 .__S3MethodsTable__. environment  <NA>      1 <NA>    58   6476  TRUE
-#> 6          .__global__   character  <NA>      2 <NA>    58   6537 FALSE
+#> 2             .MFclass     closure  <NA>      1 <NA>  3503   1122  TRUE
+#> 3       .NewtonRaphson     closure  <NA>      1 <NA> 16846   1905  TRUE
+#> 4      .__NAMESPACE__. environment  <NA>      1 <NA>    58   6537  TRUE
+#> 5 .__S3MethodsTable__. environment  <NA>      1 <NA>    58   6740  TRUE
+#> 6          .__global__   character  <NA>      2 <NA>    58   6801 FALSE
 ```

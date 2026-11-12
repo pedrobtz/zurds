@@ -87,7 +87,7 @@ rds_info(serialize(1:3, NULL, ascii = TRUE, version = 2))
 #> <rds_info>
 #> kind:               rds
 #> format:             ascii, version 2
-#> written by R:       4.6.1
+#> written by R:       4.6.2
 #> readable from R:    2.3.0
 #> native encoding:    NA
 #> compression:        none
