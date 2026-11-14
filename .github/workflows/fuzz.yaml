@@ -6,7 +6,7 @@
 on:
   pull_request:
   schedule:
-    - cron: "15 17 * * *"
+    - cron: "15 17 * * 6"  # weekly, Saturdays
   workflow_dispatch:
 
 name: fuzz
